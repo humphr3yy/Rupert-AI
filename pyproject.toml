@@ -17,6 +17,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pydub>=0.25.1",
     "python-dotenv>=1.0.1",
+    "pyttsx3>=2.98",
     "speechrecognition>=3.14.1",
     "wget>=3.2",
 ]

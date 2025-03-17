@@ -525,14 +525,8 @@ class RupertBot:
         """Play an audio file in the voice channel and clean up afterwards"""
         if voice_client and voice_client.is_connected():
             try:
-                # Convert audio to PCM with better options
-                audio = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(
-                    audio_file,
-                    before_options='-nostdin -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                    options='-vn -b:a 64k -bufsize 64k'
-                ))
-                
-                # Set appropriate volume
+                # Create audio source
+                audio = discord.PCMVolumeTransformer(discord.AudioSource(audio_file))
                 audio.volume = 1.0
                 
                 def after_playing(error):
