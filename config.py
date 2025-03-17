@@ -7,11 +7,8 @@ load_dotenv()
 # Discord Bot Configuration
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 
-# Ollama API Configuration
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "localhost")
-OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
-OLLAMA_VISION_MODEL = os.getenv("OLLAMA_VISION_MODEL", "llava")
+# Gemini API Configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Vision Features
 VISION_ENABLED = os.getenv("VISION_ENABLED", "True").lower() == "true"

@@ -4,136 +4,62 @@ import json
 import base64
 from typing import Optional, Dict, Any, List
 import config
+import os
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
-class OllamaAPI:
-    def __init__(self, host: str = "localhost", port: int = 11434, model: str = "llama2", vision_model: str = "llava"):
-        """
-        Initialize the Ollama API client
-        
-        Args:
-            host: Hostname where Ollama is running
-            port: Port number for Ollama API
-            model: The model to use for text generation
-            vision_model: The model to use for vision tasks
-        """
-        self.base_url = f"http://{host}:{port}"
-        self.model = model
-        self.vision_model = vision_model
-        self.generate_endpoint = f"{self.base_url}/api/generate"
-        self.chat_endpoint = f"{self.base_url}/api/chat"
-    
+class GeminiAPI:
+    def __init__(self):
+        """Initialize the Gemini API client"""
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        if not self.api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is required")
+
+        genai.configure(api_key=self.api_key)
+        self.text_model = genai.GenerativeModel('gemini-pro')
+        self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+
     async def generate_response(self, prompt: str, system_prompt: str = None) -> str:
-        """
-        Generate a response from Ollama based on the given prompt
-        
-        Args:
-            prompt: The text prompt to send to the model
-            system_prompt: Optional custom system prompt to override the default
-            
-        Returns:
-            Generated text response
-        """
+        """Generate a response using Gemini"""
         try:
-            if system_prompt is None:
-                system_prompt = config.SYSTEM_PROMPT
-                
-            payload = {
-                "model": self.model,
-                "prompt": prompt,
-                "system": system_prompt,
-                "stream": False
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.generate_endpoint, json=payload) as response:
-                    if response.status != 200:
-                        error_msg = await response.text()
-                        logger.error(f"Ollama API error: {response.status} - {error_msg}")
-                        return "I'm having trouble thinking right now. Can you try again?"
-                    
-                    result = await response.json()
-                    return result.get("response", "").strip()
-        
-        except aiohttp.ClientError as e:
-            logger.error(f"Error connecting to Ollama API: {e}")
-            return "I'm unable to connect to my thinking module right now. Please check if Ollama is running."
+            if system_prompt:
+                full_prompt = f"{system_prompt}\n\n{prompt}"
+            else:
+                full_prompt = prompt
+
+            response = await self.text_model.generate_content_async(full_prompt)
+            return response.text
+
         except Exception as e:
-            logger.error(f"Unexpected error with Ollama API: {e}")
-            return "Something unexpected happened. Can you try again later?"
-    
+            logger.error(f"Error with Gemini API: {e}")
+            return "I'm having trouble thinking right now. Can you try again?"
+
     async def generate_vision_response(self, prompt: str, base64_image: str, system_prompt: str = None) -> str:
-        """
-        Generate a response from a vision model based on text prompt and image
-        
-        Args:
-            prompt: Text prompt to guide the image analysis
-            base64_image: Base64-encoded image data
-            system_prompt: Optional custom system prompt specific to the content type
-            
-        Returns:
-            Generated text response describing the image
-        """
+        """Generate a response from vision model based on text prompt and image"""
         try:
-            # Use the provided system prompt or fall back to the default vision prompt
-            if system_prompt is None:
-                system_prompt = config.VISION_SYSTEM_PROMPT
-                
-            # Simplified implementation - real implementation would use appropriate
-            # multimodal API endpoints for Ollama's vision models
-            
-            # Using the chat endpoint with multimodal data
-            messages = [
-                {
-                    "role": "system",
-                    "content": system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image", "image": base64_image}
-                    ]
-                }
-            ]
-            
-            payload = {
-                "model": self.vision_model,
-                "messages": messages,
-                "stream": False
-            }
-            
-            # Using the chat endpoint for multimodal models
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.chat_endpoint, json=payload) as response:
-                    if response.status != 200:
-                        error_msg = await response.text()
-                        logger.error(f"Ollama Vision API error: {response.status} - {error_msg}")
-                        return "I'm having trouble analyzing the image right now."
-                    
-                    result = await response.json()
-                    return result.get("message", {}).get("content", "").strip()
-                    
-        except aiohttp.ClientError as e:
-            logger.error(f"Error connecting to Ollama Vision API: {e}")
-            return "I'm unable to analyze the image right now. Please check if Ollama is running with a vision-capable model."
+            if system_prompt:
+                full_prompt = f"{system_prompt}\n\n{prompt}"
+            else:
+                full_prompt = prompt
+
+            # Decode base64 image
+            image_data = base64.b64decode(base64_image)
+
+            # Create image parts for the model
+            response = await self.vision_model.generate_content_async([
+                full_prompt,
+                {"mime_type": "image/jpeg", "data": image_data}
+            ])
+
+            return response.text
+
         except Exception as e:
-            logger.error(f"Unexpected error with Ollama Vision API: {e}")
-            return "I encountered an issue while trying to analyze the image."
-    
+            logger.error(f"Error with Gemini Vision API: {e}")
+            return "I'm having trouble analyzing the image right now."
+
     async def analyze_conversation_context(self, transcript: str, context: str = None) -> Dict[str, Any]:
-        """
-        Analyze a conversation transcript to determine if it's addressed to Rupert
-        and extract relevant context
-        
-        Args:
-            transcript: The transcribed speech to analyze
-            context: Optional additional context about the conversation
-            
-        Returns:
-            Dictionary with analysis results including whether the user is addressing Rupert
-        """
+        """Analyze if the conversation is directed at Rupert"""
         try:
             prompt = (
                 f"Analyze this conversation transcript and determine if the person is talking TO Rupert "
@@ -143,41 +69,28 @@ class OllamaAPI:
                 f"Return JSON with these fields: {{\"is_addressing_rupert\": true/false, "
                 f"\"requires_response\": true/false, \"confidence\": 0-1, \"explanation\": \"brief explanation\"}}"
             )
-            
-            # Use a more analytical system prompt for this task
-            system_prompt = (
-                "You are an AI language analyzer that evaluates conversation transcripts "
-                "to determine who is being addressed. Respond only with the requested JSON format."
-            )
-            
-            response = await self.generate_response(prompt, system_prompt)
-            
-            # Try to parse the response as JSON
+
+            response = await self.text_model.generate_content_async(prompt)
+
             try:
-                # Find JSON in the response (the model might wrap it in text)
-                import re
-                json_match = re.search(r'({.*})', response.replace('\n', ' '))
-                if json_match:
-                    result = json.loads(json_match.group(1))
-                    return result
-                else:
-                    # Fallback to simpler analysis
-                    logger.warning("Could not extract JSON from analyzer response")
-                    return {"is_addressing_rupert": "rupert" in transcript.lower(), 
-                            "requires_response": True, 
-                            "confidence": 0.5, 
-                            "explanation": "Basic keyword detection"}
+                # Extract JSON from response
+                json_match = response.text.strip()
+                result = json.loads(json_match)
+                return result
             except json.JSONDecodeError:
-                logger.warning("Could not parse JSON from analyzer response")
-                return {"is_addressing_rupert": "rupert" in transcript.lower(), 
-                        "requires_response": True, 
-                        "confidence": 0.5, 
-                        "explanation": "Basic keyword detection"}
-                
+                # Fallback to basic detection
+                return {
+                    "is_addressing_rupert": "rupert" in transcript.lower(),
+                    "requires_response": True,
+                    "confidence": 0.5,
+                    "explanation": "Basic keyword detection"
+                }
+
         except Exception as e:
             logger.error(f"Error analyzing conversation context: {e}")
-            # Conservative default is to assume we're being addressed if Rupert is mentioned
-            return {"is_addressing_rupert": "rupert" in transcript.lower(), 
-                    "requires_response": True, 
-                    "confidence": 0.5, 
-                    "explanation": "Error in analysis, defaulting to keyword detection"}
+            return {
+                "is_addressing_rupert": "rupert" in transcript.lower(),
+                "requires_response": True,
+                "confidence": 0.5,
+                "explanation": "Error in analysis"
+            }

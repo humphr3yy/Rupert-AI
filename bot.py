@@ -10,7 +10,7 @@ from discord.ext import commands
 from typing import Dict, Optional, List, Tuple, Union, Any
 
 from transcription import Transcriber
-from ai_integration import OllamaAPI
+from ai_integration import GeminiAPI
 from tts import PiperTTS
 from utils import create_temp_file, cleanup_temp_file, capture_screenshot, analyze_image_with_vision_model, detect_content_type, analyze_conversation_intent
 from config import (
@@ -40,12 +40,7 @@ class RupertBot:
         
         # Initialize components
         self.transcriber = Transcriber()
-        self.ollama_api = OllamaAPI(
-            host=OLLAMA_HOST, 
-            port=OLLAMA_PORT, 
-            model=OLLAMA_MODEL,
-            vision_model=OLLAMA_VISION_MODEL
-        )
+        self.ai_api = GeminiAPI()
         self.tts = PiperTTS()
         
         # Voice client tracking
