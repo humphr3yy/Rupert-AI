@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rupert Bot Dashboard</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
             --rupert-pink: rgba(255, 0, 255, 0.7);
@@ -16,18 +16,22 @@
         }
         
         body {
-            background: linear-gradient(-45deg, var(--rupert-pink), var(--rupert-purple), var(--rupert-cyan), var(--rupert-green), var(--rupert-yellow));
-            background-size: 400% 400%;
-            animation: rupert-bg 15s ease infinite;
+            background-image: url('/static/images/background.png');
+            background-size: cover;
+            background-attachment: fixed;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
         }
         
-        @keyframes rupert-bg {
-            0% { background-position: 0% 50% }
-            25% { background-position: 50% 100% }
-            50% { background-position: 100% 50% }
-            75% { background-position: 50% 0% }
-            100% { background-position: 0% 50% }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
         }
         
         .card {
@@ -55,7 +59,7 @@
         }
         
         h1, h2, h3, h4, h5, .navbar-brand {
-            font-family: 'Pacifico', cursive;
+            font-family: 'Dancing Script', cursive;
             background: linear-gradient(90deg, var(--rupert-pink), var(--rupert-cyan), var(--rupert-yellow));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -357,9 +361,8 @@
         </nav>
         
         <div class="text-center mb-5">
-            <img src="/static/images/rupert-banner.png" alt="Rupert Banner" class="rupert-banner">
-            <img src="/static/images/rupert-picture.png" alt="Rupert AI" class="rupert-dashboard-logo" style="max-width: 200px; margin-top: -20px;">
-            <h1 class="display-4 mt-3">Rupert Dashboard</h1>
+            <img src="/static/images/rupert.png" alt="Rupert AI" class="rupert-dashboard-logo" style="max-height: 250px; width: auto; display: block; margin: 0 auto 20px;">
+            <h1 class="display-4 mt-3" style="font-family: 'Dancing Script', cursive;">Rupert Dashboard</h1>
             <p class="lead glow-text">Monitor and control your psychedelic Discord AI assistant</p>
         </div>
 
