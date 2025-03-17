@@ -5,8 +5,9 @@ import io
 import os
 import re
 import time
+import datetime
 from discord.ext import commands
-from typing import Dict, Optional, List, Tuple, Union
+from typing import Dict, Optional, List, Tuple, Union, Any
 
 from transcription import Transcriber
 from ai_integration import OllamaAPI
@@ -14,8 +15,10 @@ from tts import PiperTTS
 from utils import create_temp_file, cleanup_temp_file, capture_screenshot, analyze_conversation_intent
 from config import (
     COMMAND_PREFIX, OLLAMA_HOST, OLLAMA_PORT, OLLAMA_MODEL, OLLAMA_VISION_MODEL,
-    SYSTEM_PROMPT, VISION_SYSTEM_PROMPT, VISION_ENABLED, VISION_CONVERSATION_THRESHOLD,
-    INTENT_ANALYSIS_ENABLED, INTENT_CONFIDENCE_THRESHOLD
+    SYSTEM_PROMPT, VISION_SYSTEM_PROMPT, DM_SYSTEM_PROMPT, TEXT_CHANNEL_SYSTEM_PROMPT,
+    VISION_ENABLED, VISION_CONVERSATION_THRESHOLD,
+    INTENT_ANALYSIS_ENABLED, INTENT_CONFIDENCE_THRESHOLD,
+    TEXT_ENABLED, MESSAGE_HISTORY_LIMIT, TEXT_COOLDOWN_SECONDS
 )
 
 logger = logging.getLogger(__name__)
@@ -456,6 +459,204 @@ class RupertBot:
         
         return cleaned
     
+    async def on_message(self, message):
+        """
+        Handle text messages in both DMs and server text channels
+        This is called whenever a message is received
+        """
+        # Skip messages from bots (including ourselves)
+        if message.author.bot:
+            return
+            
+        # Skip if text interactions are disabled
+        if not TEXT_ENABLED:
+            return
+            
+        # Process the message
+        is_dm = isinstance(message.channel, discord.DMChannel)
+        is_mentioned = self.bot.user in message.mentions if self.bot.user else False
+        contains_rupert = "rupert" in message.content.lower()
+        
+        if is_dm or is_mentioned or contains_rupert:
+            # We should process this message
+            logger.info(f"Processing {'DM' if is_dm else 'text channel'} message from {message.author.display_name}")
+            
+            # Log the message
+            channel_name = "DM" if is_dm else f"#{message.channel.name}"
+            logger.info(f"[{channel_name}] {message.author.display_name}: {message.content}")
+            
+            # Get message history for context
+            context = await self.get_message_history(message.channel)
+            
+            # Generate response appropriate to the channel type
+            response = None
+            try:
+                if is_dm:
+                    # This is a DM, handle it accordingly
+                    response = await self.handle_dm_message(message, context)
+                else:
+                    # This is a text channel message, check if we need to respond
+                    if is_mentioned or (contains_rupert and await self.should_respond_to_text(message)):
+                        response = await self.handle_text_channel_message(message, context)
+                
+                # Send the response if we have one
+                if response:
+                    # Split long messages if needed
+                    if len(response) > 1900:  # Discord has a 2000 char limit
+                        chunks = [response[i:i+1900] for i in range(0, len(response), 1900)]
+                        for chunk in chunks:
+                            await message.channel.send(chunk)
+                    else:
+                        await message.channel.send(response)
+                        
+            except Exception as e:
+                logger.error(f"Error handling message: {e}")
+                if is_dm:  # Only send error messages in DMs to avoid cluttering servers
+                    await message.channel.send("I encountered an error processing your message. Please try again later.")
+    
+    async def handle_dm_message(self, message, context: str) -> str:
+        """
+        Handle a direct message from a user
+        
+        Args:
+            message: The Discord message object
+            context: String containing message history
+            
+        Returns:
+            Response text to send back to the user
+        """
+        # Prepare prompt with DM-specific context
+        prompt = (
+            f"The following is a direct message from a Discord user named {message.author.display_name}:\n\n"
+            f"Message: {message.content}\n\n"
+        )
+        
+        # Add conversation history if available
+        if context:
+            prompt += f"Recent conversation history:\n{context}\n\n"
+        
+        # Send to Ollama with the DM system prompt
+        response = await self.ollama_api.generate_response(prompt, DM_SYSTEM_PROMPT)
+        
+        return response
+    
+    async def handle_text_channel_message(self, message, context: str) -> str:
+        """
+        Handle a message from a server text channel
+        
+        Args:
+            message: The Discord message object
+            context: String containing message history
+            
+        Returns:
+            Response text to send back to the user
+        """
+        # Prepare prompt with text channel specific context
+        guild_name = message.guild.name if message.guild else "Unknown Server"
+        channel_name = message.channel.name if hasattr(message.channel, 'name') else "Unknown Channel"
+        
+        prompt = (
+            f"The following message was sent in a Discord server text channel.\n"
+            f"Server: {guild_name}\n"
+            f"Channel: #{channel_name}\n"
+            f"User: {message.author.display_name}\n\n"
+            f"Message: {message.content}\n\n"
+        )
+        
+        # Add conversation history if available
+        if context:
+            prompt += f"Recent conversation history in this channel:\n{context}\n\n"
+        
+        # Send to Ollama with the text channel system prompt
+        response = await self.ollama_api.generate_response(prompt, TEXT_CHANNEL_SYSTEM_PROMPT)
+        
+        return response
+    
+    async def get_message_history(self, channel, limit: int = None) -> str:
+        """
+        Get recent message history from a channel for context
+        
+        Args:
+            channel: The Discord channel to get history from
+            limit: Maximum number of messages to retrieve (uses config if None)
+            
+        Returns:
+            Formatted message history as a string
+        """
+        if limit is None:
+            limit = MESSAGE_HISTORY_LIMIT
+            
+        messages = []
+        try:
+            async for msg in channel.history(limit=limit):
+                if not msg.author.bot:  # Skip bot messages in history
+                    messages.append({
+                        'author': msg.author.display_name,
+                        'content': msg.content,
+                        'timestamp': msg.created_at.isoformat()
+                    })
+        except Exception as e:
+            logger.error(f"Error retrieving message history: {e}")
+            return ""
+            
+        # Reverse to get chronological order
+        messages.reverse()
+        
+        # Format the messages
+        formatted_history = "\n".join([
+            f"[{msg['timestamp']}] {msg['author']}: {msg['content']}"
+            for msg in messages
+        ])
+        
+        return formatted_history
+    
+    async def should_respond_to_text(self, message) -> bool:
+        """
+        Determine if we should respond to a text message that contains 'rupert'
+        but doesn't explicitly mention the bot
+        
+        Args:
+            message: The Discord message
+            
+        Returns:
+            True if we should respond, False otherwise
+        """
+        # If the message explicitly mentions Rupert, analyze the intent
+        # This is similar to voice chat intent analysis but for text
+        is_addressing_rupert = False
+        
+        # Use the utility function to analyze intent
+        is_addressing_rupert, confidence = analyze_conversation_intent(message.content)
+        
+        # If confidence is high enough, return immediately
+        if confidence >= INTENT_CONFIDENCE_THRESHOLD:
+            return is_addressing_rupert
+            
+        # If confidence is low and AI intent analysis is enabled, use it
+        if INTENT_ANALYSIS_ENABLED:
+            try:
+                # Get recent message history for context
+                context = await self.get_message_history(message.channel, 5)
+                
+                # Analyze using AI
+                analysis = await self.ollama_api.analyze_conversation_context(message.content, context)
+                
+                # Update based on AI analysis
+                is_addressing_rupert = analysis.get("is_addressing_rupert", is_addressing_rupert)
+                requires_response = analysis.get("requires_response", True)
+                
+                return is_addressing_rupert and requires_response
+                
+            except Exception as e:
+                logger.error(f"Error in text message intent analysis: {e}")
+                # Fall back to the simple analysis result
+                
+        return is_addressing_rupert
+    
     def run(self):
         """Run the Discord bot"""
+        # Register the message handler
+        self.bot.add_listener(self.on_message, 'on_message')
+        
+        # Run the bot
         self.bot.run(self.token)
