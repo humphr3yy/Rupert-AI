@@ -124,8 +124,10 @@ class RupertBot:
                 
                 await ctx.send(f"Joined {channel.name}!")
                 
-                # Start listening and transcribing
-                asyncio.create_task(self.listen_and_transcribe(ctx.guild, voice_client))
+                # Test TTS
+                test_message = "Hello! I'm Rupert and I'm ready to chat!"
+                audio_file = await self.tts.text_to_speech(test_message)
+                await self.play_audio_response(voice_client, audio_file)
                 
                 # Check if someone is already screensharing
                 for member in channel.members:
@@ -521,14 +523,20 @@ class RupertBot:
     
     async def play_audio_response(self, voice_client, audio_file: str):
         """Play an audio file in the voice channel and clean up afterwards"""
-        if voice_client.is_connected():
+        if voice_client and voice_client.is_connected():
             try:
-                source = discord.FFmpegPCMAudio(audio_file)
-                voice_client.play(source)
+                # Create audio source with FFmpeg
+                source = discord.FFmpegPCMAudio(audio_file, options='-loglevel error')
                 
-                # Wait until the audio finishes playing
-                while voice_client.is_playing():
-                    await asyncio.sleep(0.1)
+                # Play the audio
+                if not voice_client.is_playing():
+                    voice_client.play(source)
+                    
+                    # Wait until the audio finishes playing
+                    while voice_client.is_playing():
+                        await asyncio.sleep(0.1)
+            except Exception as e:
+                logger.error(f"Error playing audio: {e}")
             finally:
                 # Clean up the temporary audio file
                 cleanup_temp_file(audio_file)
