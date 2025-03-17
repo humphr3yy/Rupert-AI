@@ -6,6 +6,26 @@
     <title>Rupert Bot Dashboard</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <style>
+        :root {
+            --rupert-pink: rgba(255, 0, 255, 0.7);
+            --rupert-yellow: rgba(255, 255, 0, 0.7);
+            --rupert-cyan: rgba(0, 255, 255, 0.7);
+        }
+        body {
+            background: linear-gradient(45deg, var(--rupert-pink), var(--rupert-cyan), var(--rupert-yellow));
+            background-size: 400% 400%;
+            animation: rupert-bg 15s ease infinite;
+        }
+        @keyframes rupert-bg {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+        .card, .navbar {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         .status-indicator {
             width: 15px;
             height: 15px;
@@ -14,18 +34,21 @@
             margin-right: 5px;
         }
         .status-online {
-            background-color: var(--bs-success);
+            background-color: var(--rupert-cyan);
+            box-shadow: 0 0 10px var(--rupert-cyan);
         }
         .status-offline {
-            background-color: var(--bs-danger);
+            background-color: var(--rupert-pink);
+            box-shadow: 0 0 10px var(--rupert-pink);
         }
         .log-container {
             height: 300px;
             overflow-y: auto;
-            background-color: rgba(0, 0, 0, 0.2);
+            background-color: rgba(0, 0, 0, 0.5);
             border-radius: 5px;
             padding: 10px;
             font-family: monospace;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .log-entry {
             margin-bottom: 5px;
@@ -33,29 +56,51 @@
             padding-bottom: 5px;
         }
         .log-time {
-            color: var(--bs-info);
+            color: var(--rupert-cyan);
             margin-right: 10px;
         }
         .log-speaker {
             font-weight: bold;
-            color: var(--bs-warning);
+            color: var(--rupert-yellow);
         }
         .bot-controls {
             margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: var(--rupert-cyan);
+            border-color: var(--rupert-cyan);
+        }
+        .btn-primary:hover {
+            background-color: rgba(0, 200, 200, 0.7);
+            border-color: rgba(0, 200, 200, 0.7);
+        }
+        .btn-danger {
+            background-color: var(--rupert-pink);
+            border-color: var(--rupert-pink);
+        }
+        .btn-danger:hover {
+            background-color: rgba(200, 0, 200, 0.7);
+            border-color: rgba(200, 0, 200, 0.7);
+        }
+        .rupert-banner {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .badge.bg-success {
+            background-color: var(--rupert-cyan) !important;
+        }
+        .badge.bg-danger {
+            background-color: var(--rupert-pink) !important;
         }
     </style>
 </head>
 <body>
     <div class="container py-4">
-        <nav class="navbar navbar-expand-lg mb-4 navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-lg mb-4 navbar-dark">
             <div class="container-fluid">
                 <a class="navbar-brand" href="/">
-                    <svg width="30" height="30" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="me-2">
-                        <rect x="20" y="20" width="60" height="60" rx="10" fill="var(--bs-info)" />
-                        <circle cx="35" cy="40" r="5" fill="white" />
-                        <circle cx="65" cy="40" r="5" fill="white" />
-                        <rect x="30" y="60" width="40" height="5" rx="2" fill="white" />
-                    </svg>
+                    <img src="/static/images/rupert.png" alt="Rupert" width="40" height="40" class="me-2">
                     Rupert Bot
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -76,6 +121,10 @@
                 </div>
             </div>
         </nav>
+        
+        <div class="text-center mb-4">
+            <img src="/static/images/rupert-banner.png" alt="Rupert Banner" class="rupert-banner">
+        </div>
 
         <div class="row mb-4">
             <div class="col-md-6">
