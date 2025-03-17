@@ -525,42 +525,30 @@ class RupertBot:
         """Play an audio file in the voice channel and clean up afterwards"""
         if voice_client and voice_client.is_connected():
             try:
-                # Wait a moment to ensure voice connection is ready
-                await asyncio.sleep(0.5)
-                
-                # Create audio source with FFmpeg
-                source = discord.FFmpegPCMAudio(
+                # Convert audio to PCM
+                audio = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(
                     audio_file,
-                    options='-loglevel error -threads 4 -nostdin'
-                )
+                    before_options='-nostdin',
+                    options='-vn -b:a 64k'
+                ))
                 
-                # Play the audio with a timeout
-                if not voice_client.is_playing():
-                    try:
-                        voice_client.play(source, after=lambda e: logger.error(f'Player error: {e}') if e else None)
-                        timeout = 30  # Maximum wait time in seconds
-                        
-                        # Wait until the audio finishes playing or timeout
-                        start_time = time.time()
-                        while voice_client.is_playing():
-                            if time.time() - start_time > timeout:
-                                voice_client.stop()
-                                logger.warning("Audio playback timed out")
-                                break
-                            await asyncio.sleep(0.1)
-                            
-                    except Exception as e:
-                        logger.error(f"Error during playback: {e}")
-                        if voice_client.is_playing():
-                            voice_client.stop()
-                        
+                # Set appropriate volume
+                audio.volume = 1.0
+                
+                def after_playing(error):
+                    if error:
+                        logger.error(f"Error in playback: {error}")
+                    cleanup_temp_file(audio_file)
+                
+                # Play the audio
+                voice_client.play(audio, after=after_playing)
+                
+                # Wait for playback to complete
+                while voice_client.is_playing():
+                    await asyncio.sleep(0.2)
+                    
             except Exception as e:
                 logger.error(f"Error playing audio: {str(e)}")
-            finally:
-                # Ensure the source is cleaned up
-                if hasattr(source, 'cleanup'):
-                    source.cleanup()
-                # Clean up the temporary audio file
                 cleanup_temp_file(audio_file)
     
     def clean_transcript_for_prompt(self, transcript: str) -> str:
