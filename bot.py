@@ -531,22 +531,28 @@ class RupertBot:
                 # Create audio source with FFmpeg
                 source = discord.FFmpegPCMAudio(
                     audio_file,
-                    options='-loglevel error -threads 4'
+                    options='-loglevel error -threads 4 -nostdin'
                 )
                 
                 # Play the audio with a timeout
                 if not voice_client.is_playing():
-                    voice_client.play(source)
-                    timeout = 30  # Maximum wait time in seconds
-                    
-                    # Wait until the audio finishes playing or timeout
-                    start_time = time.time()
-                    while voice_client.is_playing():
-                        if time.time() - start_time > timeout:
+                    try:
+                        voice_client.play(source, after=lambda e: logger.error(f'Player error: {e}') if e else None)
+                        timeout = 30  # Maximum wait time in seconds
+                        
+                        # Wait until the audio finishes playing or timeout
+                        start_time = time.time()
+                        while voice_client.is_playing():
+                            if time.time() - start_time > timeout:
+                                voice_client.stop()
+                                logger.warning("Audio playback timed out")
+                                break
+                            await asyncio.sleep(0.1)
+                            
+                    except Exception as e:
+                        logger.error(f"Error during playback: {e}")
+                        if voice_client.is_playing():
                             voice_client.stop()
-                            logger.warning("Audio playback timed out")
-                            break
-                        await asyncio.sleep(0.1)
                         
             except Exception as e:
                 logger.error(f"Error playing audio: {str(e)}")
