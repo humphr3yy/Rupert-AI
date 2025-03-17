@@ -404,8 +404,8 @@
                             <span class="badge bg-success">Connected</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Ollama API</span>
-                            <span class="badge bg-warning text-dark" id="ollama-status">Checking...</span>
+                            <span>Gemini API</span>
+                            <span class="badge bg-warning text-dark" id="gemini-status">Checking...</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Piper TTS</span>
@@ -418,20 +418,20 @@
                         
                         <hr>
                         
-                        <h5>Ollama Configuration</h5>
+                        <h5>Gemini API Configuration</h5>
                         <div class="mb-3">
-                            <label for="ollama-host" class="form-label">Host</label>
-                            <input type="text" class="form-control" id="ollama-host" value="localhost">
+                            <label for="gemini-api-key" class="form-label">API Key</label>
+                            <input type="password" class="form-control" id="gemini-api-key" placeholder="Your Gemini API Key">
                         </div>
                         <div class="mb-3">
-                            <label for="ollama-port" class="form-label">Port</label>
-                            <input type="number" class="form-control" id="ollama-port" value="11434">
+                            <label for="gemini-text-model" class="form-label">Text Model</label>
+                            <input type="text" class="form-control" id="gemini-text-model" value="gemini-pro">
                         </div>
                         <div class="mb-3">
-                            <label for="ollama-model" class="form-label">Model</label>
-                            <input type="text" class="form-control" id="ollama-model" value="rupert:latest">
+                            <label for="gemini-vision-model" class="form-label">Vision Model</label>
+                            <input type="text" class="form-control" id="gemini-vision-model" value="gemini-pro-vision">
                         </div>
-                        <button class="btn btn-info" id="check-ollama">Check Connection</button>
+                        <button class="btn btn-info" id="check-gemini">Check Connection</button>
                     </div>
                 </div>
             </div>
