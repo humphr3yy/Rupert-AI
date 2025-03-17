@@ -16,8 +16,8 @@ class GeminiAPI:
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
         genai.configure(api_key=self.api_key, transport="rest")
-        model_name = "gemini-1.0-pro"  # Updated model name
-        vision_model_name = "gemini-1.0-pro-vision"  # Updated vision model name
+        model_name = "gemini-pro"  # Correct model name
+        vision_model_name = "gemini-pro-vision"  # Correct vision model name
         
         self.text_model = genai.GenerativeModel(model_name)
         self.vision_model = genai.GenerativeModel(vision_model_name)
