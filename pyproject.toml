@@ -17,4 +17,5 @@ dependencies = [
     "pydub>=0.25.1",
     "python-dotenv>=1.0.1",
     "speechrecognition>=3.14.1",
+    "wget>=3.2",
 ]

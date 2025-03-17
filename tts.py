@@ -56,13 +56,10 @@ class PiperTTS:
             model_path = f"{model_dir}/model.onnx"
             if not os.path.exists(model_path):
                 logger.info(f"Downloading Piper voice model: {self.voice}")
-                # First install piper-phonemize
-                subprocess.run(["pip", "install", "--upgrade", "piper-phonemize"], check=True)
-                # Then download the model
+                # Download model directly using wget
+                model_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/{self.voice}.onnx"
                 subprocess.run([
-                    "piper-download", 
-                    "--model", self.voice,
-                    "--output_dir", "piper_models"
+                    "wget", "-O", model_path, model_url
                 ], check=True)
 
             cmd = [
