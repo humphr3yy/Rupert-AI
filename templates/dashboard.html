@@ -5,27 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rupert Bot Dashboard</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
     <style>
         :root {
             --rupert-pink: rgba(255, 0, 255, 0.7);
-            --rupert-yellow: rgba(255, 255, 0, 0.7);
-            --rupert-cyan: rgba(0, 255, 255, 0.7);
+            --rupert-yellow: rgba(255, 255, 0, 0.8);
+            --rupert-cyan: rgba(0, 255, 255, 0.8);
+            --rupert-green: rgba(0, 255, 0, 0.7);
+            --rupert-purple: rgba(150, 0, 255, 0.7);
         }
+        
         body {
-            background: linear-gradient(45deg, var(--rupert-pink), var(--rupert-cyan), var(--rupert-yellow));
+            background: linear-gradient(-45deg, var(--rupert-pink), var(--rupert-purple), var(--rupert-cyan), var(--rupert-green), var(--rupert-yellow));
             background-size: 400% 400%;
             animation: rupert-bg 15s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         @keyframes rupert-bg {
             0% { background-position: 0% 50% }
+            25% { background-position: 50% 100% }
             50% { background-position: 100% 50% }
+            75% { background-position: 50% 0% }
             100% { background-position: 0% 50% }
         }
-        .card, .navbar {
-            background-color: rgba(0, 0, 0, 0.7) !important;
+        
+        .card {
+            background-color: rgba(0, 0, 0, 0.65) !important;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transform: perspective(1000px) rotateX(2deg);
+            transition: all 0.3s ease;
         }
+        
+        .card:hover {
+            transform: perspective(1000px) rotateX(0deg);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.65) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1, h2, h3, h4, h5, .navbar-brand {
+            font-family: 'Pacifico', cursive;
+            background: linear-gradient(90deg, var(--rupert-pink), var(--rupert-cyan), var(--rupert-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 300% auto;
+            animation: gradient-text 6s ease infinite;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes gradient-text {
+            0% { background-position: 0% center }
+            50% { background-position: 100% center }
+            100% { background-position: 0% center }
+        }
+        
+        .card-title {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .list-group-item {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px !important;
+            margin-bottom: 5px;
+        }
+        
         .status-indicator {
             width: 15px;
             height: 15px;
@@ -33,65 +91,241 @@
             display: inline-block;
             margin-right: 5px;
         }
+        
         .status-online {
             background-color: var(--rupert-cyan);
-            box-shadow: 0 0 10px var(--rupert-cyan);
+            box-shadow: 0 0 15px var(--rupert-cyan);
+            animation: pulse 2s infinite;
         }
+        
         .status-offline {
             background-color: var(--rupert-pink);
             box-shadow: 0 0 10px var(--rupert-pink);
         }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7) }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 255, 0) }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0) }
+        }
+        
         .log-container {
             height: 300px;
             overflow-y: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            border-radius: 5px;
-            padding: 10px;
-            font-family: monospace;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
         }
+        
         .log-entry {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 5px;
+            padding-bottom: 8px;
+            transition: all 0.2s ease;
         }
+        
+        .log-entry:hover {
+            transform: translateX(5px);
+            border-left: 3px solid var(--rupert-cyan);
+            padding-left: 5px;
+        }
+        
         .log-time {
             color: var(--rupert-cyan);
             margin-right: 10px;
+            font-weight: bold;
         }
+        
         .log-speaker {
             font-weight: bold;
             color: var(--rupert-yellow);
+            text-shadow: 0 0 5px rgba(255, 255, 0, 0.3);
         }
+        
         .bot-controls {
             margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
         }
+        
+        .btn {
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: -1;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover::before {
+            width: 100%;
+        }
+        
         .btn-primary {
-            background-color: var(--rupert-cyan);
-            border-color: var(--rupert-cyan);
+            background: linear-gradient(90deg, var(--rupert-cyan), var(--rupert-green));
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
         }
+        
         .btn-primary:hover {
-            background-color: rgba(0, 200, 200, 0.7);
-            border-color: rgba(0, 200, 200, 0.7);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0, 255, 255, 0.4);
         }
+        
         .btn-danger {
-            background-color: var(--rupert-pink);
-            border-color: var(--rupert-pink);
+            background: linear-gradient(90deg, var(--rupert-pink), var(--rupert-purple));
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3);
         }
+        
         .btn-danger:hover {
-            background-color: rgba(200, 0, 200, 0.7);
-            border-color: rgba(200, 0, 200, 0.7);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(255, 0, 255, 0.4);
         }
+        
+        .btn-info {
+            background: linear-gradient(90deg, var(--rupert-cyan), var(--rupert-purple));
+            border: none;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .btn-info:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0, 255, 255, 0.4);
+            color: white;
+        }
+        
         .rupert-banner {
             max-width: 100%;
             height: auto;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+            transform: perspective(1000px) rotateX(5deg);
+            transition: all 0.5s ease;
         }
+        
+        .rupert-banner:hover {
+            transform: perspective(1000px) rotateX(0deg) scale(1.02);
+        }
+        
+        .rupert-logo {
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px) }
+            50% { transform: translateY(-10px) }
+            100% { transform: translateY(0px) }
+        }
+        
+        .badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: normal;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
         .badge.bg-success {
-            background-color: var(--rupert-cyan) !important;
+            background: linear-gradient(90deg, var(--rupert-cyan), var(--rupert-green)) !important;
         }
+        
         .badge.bg-danger {
-            background-color: var(--rupert-pink) !important;
+            background: linear-gradient(90deg, var(--rupert-pink), var(--rupert-purple)) !important;
+        }
+        
+        .badge.bg-warning {
+            background: linear-gradient(90deg, var(--rupert-yellow), var(--rupert-pink)) !important;
+            color: black !important;
+        }
+        
+        .form-control {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-color: var(--rupert-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .form-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        hr {
+            border-color: rgba(255, 255, 255, 0.1);
+            margin: 30px 0;
+        }
+        
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            position: relative;
+        }
+        
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: white;
+        }
+        
+        .navbar-nav .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--rupert-cyan), var(--rupert-pink));
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover::after,
+        .navbar-nav .nav-link.active::after {
+            width: 100%;
+        }
+        
+        /* Psychedelic effect for logo animation */
+        .rupert-dashboard-logo {
+            animation: hue-rotate 10s infinite linear;
+        }
+        
+        @keyframes hue-rotate {
+            from { filter: hue-rotate(0deg); }
+            to { filter: hue-rotate(360deg); }
+        }
+        
+        /* Glowing text effect */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
+                        0 0 20px rgba(255, 255, 255, 0.3), 
+                        0 0 30px rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -100,8 +334,8 @@
         <nav class="navbar navbar-expand-lg mb-4 navbar-dark">
             <div class="container-fluid">
                 <a class="navbar-brand" href="/">
-                    <img src="/static/images/rupert.png" alt="Rupert" width="40" height="40" class="me-2">
-                    Rupert Bot
+                    <img src="/static/images/rupert.png" alt="Rupert" width="50" height="50" class="me-2 rupert-logo">
+                    <span>Rupert Bot</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -122,8 +356,11 @@
             </div>
         </nav>
         
-        <div class="text-center mb-4">
+        <div class="text-center mb-5">
             <img src="/static/images/rupert-banner.png" alt="Rupert Banner" class="rupert-banner">
+            <img src="/static/images/rupert-picture.png" alt="Rupert AI" class="rupert-dashboard-logo" style="max-width: 200px; margin-top: -20px;">
+            <h1 class="display-4 mt-3">Rupert Dashboard</h1>
+            <p class="lead glow-text">Monitor and control your psychedelic Discord AI assistant</p>
         </div>
 
         <div class="row mb-4">
