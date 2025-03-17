@@ -204,7 +204,7 @@ async def analyze_image_with_vision_model(image_path: str, prompt: str, gemini_a
         
         # Analyze the image using the vision model through Gemini API
         analysis = await gemini_api.generate_vision_response(prompt, image_path, system_prompt)
-        return analysis
+        return analysis if analysis else "Unable to analyze the image at this time."
         
     except Exception as e:
         logger.error(f"Error analyzing image: {e}")
@@ -224,9 +224,9 @@ def detect_content_type(image_path: str) -> str:
         # For a real implementation, this would use image recognition to identify content
         # Here we'll just simulate detection with placeholder logic
         
-        # If the file doesn't exist or is empty, return None
+        # If the file doesn't exist or is empty, return a default value
         if not os.path.exists(image_path) or os.path.getsize(image_path) == 0:
-            return None
+            return "unknown"
             
         # In a real implementation, we would:
         # 1. Use image recognition models to detect UI elements characteristic of each application
@@ -240,11 +240,12 @@ def detect_content_type(image_path: str) -> str:
         weights = [0.25, 0.25, 0.20, 0.20, 0.10]  # 10% chance of not recognizing anything
         
         # In a real implementation, this would be replaced with actual detection logic
-        return random.choices(content_types, weights=weights, k=1)[0]
+        result = random.choices(content_types, weights=weights, k=1)[0]
+        return result if result is not None else "unknown"
         
     except Exception as e:
         logger.error(f"Error detecting content type: {e}")
-        return None
+        return "unknown"
 
 def analyze_conversation_intent(transcript: str) -> Tuple[bool, float]:
     """
