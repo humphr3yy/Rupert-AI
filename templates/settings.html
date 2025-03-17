@@ -70,20 +70,12 @@
                     </div>
 
                     <div class="settings-section">
-                        <h4>Ollama Configuration</h4>
+                        <h4>Gemini API Configuration</h4>
                         <div class="mb-3">
-                            <label for="ollama-host" class="form-label">Ollama Host</label>
-                            <input type="text" class="form-control" id="ollama-host" name="ollama_host" value="localhost">
-                        </div>
-                        <div class="mb-3">
-                            <label for="ollama-port" class="form-label">Ollama Port</label>
-                            <input type="number" class="form-control" id="ollama-port" name="ollama_port" value="11434">
-                        </div>
-                        <div class="mb-3">
-                            <label for="ollama-model" class="form-label">Ollama Model</label>
-                            <input type="text" class="form-control" id="ollama-model" name="ollama_model" value="llama2">
+                            <label for="gemini-api-key" class="form-label">Gemini API Key</label>
+                            <input type="password" class="form-control" id="gemini-api-key" name="gemini_api_key" placeholder="Enter your Gemini API key">
                             <div class="form-text">
-                                The name of the model you have loaded in Ollama
+                                Your Google Gemini API key. Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -201,9 +193,7 @@
                 const mockSettings = {
                     discord_token: '',
                     command_prefix: '!',
-                    ollama_host: 'localhost',
-                    ollama_port: 11434,
-                    ollama_model: 'llama2',
+                    gemini_api_key: '',
                     system_prompt: 'You are Rupert, a friendly and helpful AI assistant in a Discord voice channel. Keep your responses concise and natural for voice conversations.',
                     piper_voice: 'en_US-lessac-medium',
                     speech_language: 'en-US',

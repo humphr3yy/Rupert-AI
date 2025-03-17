@@ -54,12 +54,8 @@ def settings():
         # Update config variables
         if 'command_prefix' in settings_data:
             config.COMMAND_PREFIX = settings_data['command_prefix']
-        if 'ollama_host' in settings_data:
-            config.OLLAMA_HOST = settings_data['ollama_host']
-        if 'ollama_port' in settings_data:
-            config.OLLAMA_PORT = int(settings_data['ollama_port'])
-        if 'ollama_model' in settings_data:
-            config.OLLAMA_MODEL = settings_data['ollama_model']
+        if 'gemini_api_key' in settings_data:
+            config.GEMINI_API_KEY = settings_data['gemini_api_key']
         if 'piper_voice' in settings_data:
             config.PIPER_VOICE = settings_data['piper_voice']
         
@@ -152,46 +148,47 @@ def stop_bot():
 def get_bot_status():
     return jsonify(bot_status)
 
-@app.route("/check-ollama", methods=["POST"])
-def check_ollama():
+@app.route("/check-gemini", methods=["POST"])
+def check_gemini():
     try:
-        import aiohttp
+        import google.generativeai as genai
         import asyncio
         
-        async def test_ollama_connection():
-            host = request.json.get("host", "localhost")
-            port = request.json.get("port", 11434)
+        async def test_gemini_connection():
+            api_key = request.json.get("api_key", "")
             
-            url = f"http://{host}:{port}/api/tags"
+            if not api_key:
+                return {
+                    "status": "error",
+                    "message": "No API key provided"
+                }
             
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=3) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            return {
-                                "status": "success",
-                                "message": "Connected to Ollama successfully",
-                                "models": data.get("models", [])
-                            }
-                        else:
-                            return {
-                                "status": "error",
-                                "message": f"Ollama API returned status {response.status}"
-                            }
+                # Configure the Gemini API with the provided key
+                genai.configure(api_key=api_key)
+                
+                # Get available models to verify the API key works
+                models = genai.list_models()
+                available_models = [model.name for model in models if 'generateContent' in model.supported_generation_methods]
+                
+                return {
+                    "status": "success",
+                    "message": "Connected to Gemini API successfully",
+                    "models": available_models
+                }
             except Exception as e:
                 return {
                     "status": "error",
-                    "message": f"Error connecting to Ollama: {str(e)}"
+                    "message": f"Error connecting to Gemini API: {str(e)}"
                 }
         
-        result = asyncio.run(test_ollama_connection())
+        result = asyncio.run(test_gemini_connection())
         return jsonify(result)
         
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"Error checking Ollama: {str(e)}"
+            "message": f"Error checking Gemini API: {str(e)}"
         })
 
 @app.route("/check-piper", methods=["GET"])
