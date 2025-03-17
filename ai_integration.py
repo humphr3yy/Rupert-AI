@@ -23,15 +23,17 @@ class GeminiAPI:
             available_models = [model.name for model in models]
             
             # Check if required models are available
-            if 'models/gemini-pro' in available_models:
-                self.text_model = genai.GenerativeModel('models/gemini-pro')
+            # Use the latest Gemini 1.5 Pro model for text
+            if 'models/gemini-1.5-pro' in available_models:
+                self.text_model = genai.GenerativeModel('models/gemini-1.5-pro')
             else:
-                self.text_model = genai.GenerativeModel('gemini-pro')
+                self.text_model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
                 
+            # Use the pro vision model for image analysis
             if 'models/gemini-pro-vision' in available_models:
                 self.vision_model = genai.GenerativeModel('models/gemini-pro-vision')
             else:
-                self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+                self.vision_model = genai.GenerativeModel('models/gemini-1.0-pro-vision-latest')
                 
             logger.info(f"Initialized Gemini API with available models: {available_models}")
         except Exception as e:
