@@ -16,8 +16,29 @@ class GeminiAPI:
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
         genai.configure(api_key=self.api_key)
-        self.text_model = genai.GenerativeModel('gemini-pro')
-        self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+        
+        # Get available models
+        try:
+            models = genai.list_models()
+            available_models = [model.name for model in models]
+            
+            # Check if required models are available
+            if 'models/gemini-pro' in available_models:
+                self.text_model = genai.GenerativeModel('models/gemini-pro')
+            else:
+                self.text_model = genai.GenerativeModel('gemini-pro')
+                
+            if 'models/gemini-pro-vision' in available_models:
+                self.vision_model = genai.GenerativeModel('models/gemini-pro-vision')
+            else:
+                self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+                
+            logger.info(f"Initialized Gemini API with available models: {available_models}")
+        except Exception as e:
+            logger.error(f"Error initializing Gemini models: {e}")
+            # Fallback initialization
+            self.text_model = genai.GenerativeModel('gemini-pro')
+            self.vision_model = genai.GenerativeModel('gemini-pro-vision')
 
     async def generate_response(self, prompt: str, system_prompt: str = None) -> str:
         """Generate a response using Gemini"""
