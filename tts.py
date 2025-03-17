@@ -48,9 +48,25 @@ class PiperTTS:
         
         try:
             # Prepare the command for Piper
+            # First ensure model directory exists
+            model_dir = f"piper_models/{self.voice}"
+            os.makedirs(model_dir, exist_ok=True)
+            
+            # Check if model exists, if not download it
+            model_path = f"{model_dir}/model.onnx"
+            if not os.path.exists(model_path):
+                logger.info(f"Downloading Piper voice model: {self.voice}")
+                download_cmd = [
+                    "pip", "install", "--upgrade", "piper-phonemize",
+                    "&&", "python", "-m", "piper.download", 
+                    "--model", self.voice,
+                    "--output_dir", "piper_models"
+                ]
+                subprocess.run(download_cmd, check=True)
+
             cmd = [
                 "piper",
-                "--model", f"piper_models/{self.voice}/model.onnx",
+                "--model", model_path,
                 "--output_file", output_file
             ]
             
