@@ -57,7 +57,7 @@ class RupertBot:
         # Screenshare tracking
         self.screenshare_users: Dict[int, discord.Member] = {}  # Guild ID -> Member
         self.last_screenshot: Dict[int, str] = {}  # Guild ID -> Screenshot path
-        self.screenshot_interval = 5  # Seconds between screenshots
+        self.screenshot_interval = SCREENSHOT_INTERVAL  # Seconds between screenshots
         self.vision_tasks: Dict[int, asyncio.Task] = {}  # Guild ID -> Screenshot task
         
         # Conversation context tracking
@@ -309,6 +309,13 @@ class RupertBot:
         try:
             logger.info(f"Starting periodic screenshot capture for {member.display_name}")
             
+            # Keep track of when we last made a comment about each content type
+            last_content_comment = {}
+            
+            # For proactive commentary, track time of last comment and content type
+            last_comment_time = 0
+            last_content_type = None
+            
             while guild_id in self.voice_clients and guild_id in self.screenshare_users:
                 # Capture the screenshot
                 if self.bot.user:  # Make sure bot is fully initialized
@@ -324,9 +331,73 @@ class RupertBot:
                             # Store the new screenshot path
                             self.last_screenshot[guild_id] = screenshot_path
                             logger.info(f"Updated screenshot for {member.display_name}")
+                            
+                            # If proactive commentary is enabled, analyze the content and potentially comment
+                            if PROACTIVE_COMMENTARY:
+                                voice_client = self.voice_clients.get(guild_id)
+                                if voice_client and not voice_client.is_playing():  # Only if we're not already speaking
+                                    try:
+                                        # Detect content type
+                                        content_type = detect_content_type(screenshot_path)
+                                        
+                                        current_time = time.time()
+                                        # Decide if we should make a comment based on several factors:
+                                        # 1. At least 60 seconds since last comment of any type
+                                        # 2. Content type is recognized (not None)
+                                        # 3. Either the content type changed OR it's been at least 3 minutes since 
+                                        #    we last commented on this specific content type
+                                        should_comment = (
+                                            current_time - last_comment_time >= 60 and  # At least 60 seconds between any comments
+                                            content_type is not None and
+                                            (
+                                                content_type != last_content_type or  # Content changed
+                                                content_type not in last_content_comment or  # Never commented on this type
+                                                current_time - last_content_comment.get(content_type, 0) >= 180  # 3 minutes since last comment
+                                            )
+                                        )
+                                        
+                                        if should_comment:
+                                            # Create an appropriate prompt based on content type
+                                            if content_type == "youtube" and YOUTUBE_DETECTION_ENABLED:
+                                                prompt = "What's happening in this YouTube video right now? Provide a brief, conversational commentary."
+                                                system_prompt = YOUTUBE_SYSTEM_PROMPT
+                                            elif content_type == "chess" and BOARD_GAMES_DETECTION_ENABLED:
+                                                prompt = "What's the current state of this chess game? Analyze the position and suggest a good move."
+                                                system_prompt = CHESS_SYSTEM_PROMPT
+                                            elif content_type == "checkers" and BOARD_GAMES_DETECTION_ENABLED:
+                                                prompt = "What's the current state of this checkers game? Analyze the position and suggest a good move."
+                                                system_prompt = CHECKERS_SYSTEM_PROMPT
+                                            elif content_type == "geoguesser" and GEOGUESSER_DETECTION_ENABLED:
+                                                prompt = "Based on what you can see in this GeoGuesser scene, where might this location be? Look for clues."
+                                                system_prompt = GEOGUESSER_SYSTEM_PROMPT
+                                            else:
+                                                # Skip commentary for unknown content
+                                                should_comment = False
+                                            
+                                            if should_comment:
+                                                # Generate and speak a proactive comment
+                                                response = await analyze_image_with_vision_model(
+                                                    screenshot_path,
+                                                    prompt,
+                                                    self.ollama_api,
+                                                    content_type
+                                                )
+                                                
+                                                # Convert to speech and play
+                                                audio_file = await self.tts.text_to_speech(response)
+                                                await self.play_audio_response(voice_client, audio_file)
+                                                
+                                                # Update tracking variables
+                                                last_comment_time = current_time
+                                                last_content_type = content_type
+                                                last_content_comment[content_type] = current_time
+                                                
+                                                logger.info(f"Made proactive comment about {content_type}")
+                                    except Exception as e:
+                                        logger.error(f"Error in proactive commentary: {e}")
                 
                 # Wait before taking the next screenshot
-                await asyncio.sleep(self.screenshot_interval)
+                await asyncio.sleep(SCREENSHOT_INTERVAL)
                 
         except asyncio.CancelledError:
             logger.info(f"Screenshot capture task for {member.display_name} was cancelled")
@@ -358,14 +429,46 @@ class RupertBot:
                         await self.play_audio_response(voice_client, audio_file)
                         return
             
-            # We have a screenshot, prepare the prompt
-            clean_transcript = self.clean_transcript_for_prompt(transcript)
-            vision_prompt = f"In this Discord screenshare: {clean_transcript}"
+            # We have a screenshot, now detect what kind of content it shows
+            screenshot_path = self.last_screenshot[guild_id]
+            content_type = detect_content_type(screenshot_path)
+            logger.info(f"Detected content type in screenshare: {content_type}")
             
-            # Analyze the screenshot with the vision model
-            ai_response = await self.ollama_api.generate_vision_response(
-                vision_prompt, 
-                self.last_screenshot[guild_id]
+            # Clean and prepare the transcript
+            clean_transcript = self.clean_transcript_for_prompt(transcript)
+            
+            # Create an appropriate prompt based on content type
+            if content_type == "youtube" and YOUTUBE_DETECTION_ENABLED:
+                vision_prompt = f"I'm watching a YouTube video. {speaker} asked: {clean_transcript}"
+                vision_prompt += " Please analyze the video content, title, channel, and current scene."
+                system_prompt = YOUTUBE_SYSTEM_PROMPT
+                
+            elif content_type == "chess" and BOARD_GAMES_DETECTION_ENABLED:
+                vision_prompt = f"I'm looking at a chess board. {speaker} asked: {clean_transcript}"
+                vision_prompt += f" Please analyze the board position, suggest good moves, and evaluate the position. Look ahead {CHESS_ANALYSIS_DEPTH} moves if possible."
+                system_prompt = CHESS_SYSTEM_PROMPT
+                
+            elif content_type == "checkers" and BOARD_GAMES_DETECTION_ENABLED:
+                vision_prompt = f"I'm looking at a checkers/draughts game. {speaker} asked: {clean_transcript}"
+                vision_prompt += " Please analyze the board position, suggest good moves, and evaluate the position."
+                system_prompt = CHECKERS_SYSTEM_PROMPT
+                
+            elif content_type == "geoguesser" and GEOGUESSER_DETECTION_ENABLED:
+                vision_prompt = f"I'm playing GeoGuesser. {speaker} asked: {clean_transcript}"
+                vision_prompt += " Please analyze the location clues such as architecture, road signs, vegetation, driving side, and other geographical markers."
+                system_prompt = GEOGUESSER_SYSTEM_PROMPT
+                
+            else:
+                # Generic prompt for unknown content
+                vision_prompt = f"In this Discord screenshare: {clean_transcript}"
+                system_prompt = VISION_SYSTEM_PROMPT
+            
+            # Analyze the screenshot with the appropriate vision model and system prompt
+            ai_response = await analyze_image_with_vision_model(
+                screenshot_path, 
+                vision_prompt,
+                self.ollama_api,
+                content_type
             )
             
             logger.info(f"Vision model response: {ai_response}")
