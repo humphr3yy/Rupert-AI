@@ -56,11 +56,10 @@ class PiperTTS:
             model_path = f"{model_dir}/model.onnx"
             if not os.path.exists(model_path):
                 logger.info(f"Downloading Piper voice model: {self.voice}")
-                # Download model directly using wget
+                # Download model using urllib
                 model_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/{self.voice}.onnx"
-                subprocess.run([
-                    "wget", "-O", model_path, model_url
-                ], check=True)
+                import urllib.request
+                urllib.request.urlretrieve(model_url, model_path)
 
             cmd = [
                 "piper",
