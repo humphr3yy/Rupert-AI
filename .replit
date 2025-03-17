@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Run Bot"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -54,15 +54,6 @@ args = """
 python -c \"import bot; import transcription; import ai_integration; import tts; import utils; import config; print('All modules imported successfully'); print('Configuration:'); print(f'Command Prefix: {config.COMMAND_PREFIX}'); print(f'Ollama API: {config.OLLAMA_HOST}:{config.OLLAMA_PORT}, Model: {config.OLLAMA_MODEL}'); print('
 Bot Structure:'); print('- Transcriber module:', 'Complete' if hasattr(transcription, 'Transcriber') else 'Incomplete'); print('- OllamaAPI module:', 'Complete' if hasattr(ai_integration, 'OllamaAPI') else 'Incomplete'); print('- PiperTTS module:', 'Complete' if hasattr(tts, 'PiperTTS') else 'Incomplete'); print('- Utils:', ', '.join([f for f in dir(utils) if not f.startswith('_') and callable(getattr(utils, f))])); print('
 Bot Components:'); print('- Event handlers:', 'Implemented' if 'setup_events' in dir(bot.RupertBot) else 'Missing'); print('- Commands:', 'Implemented' if 'register_commands' in dir(bot.RupertBot) else 'Missing'); print('- Voice processing:', 'Implemented' if 'listen_and_transcribe' in dir(bot.RupertBot) else 'Missing'); print('- Rupert interaction:', 'Implemented' if 'handle_rupert_interaction' in dir(bot.RupertBot) else 'Missing')\""""
-
-[[workflows.workflow]]
-name = "Run Bot"
-author = 40595165
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python main.py"
 
 [[ports]]
 localPort = 5000
