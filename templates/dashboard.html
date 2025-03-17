@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rupert Bot Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <style>
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-online {
+            background-color: var(--bs-success);
+        }
+        .status-offline {
+            background-color: var(--bs-danger);
+        }
+        .log-container {
+            height: 300px;
+            overflow-y: auto;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
+        }
+        .log-time {
+            color: var(--bs-info);
+            margin-right: 10px;
+        }
+        .log-speaker {
+            font-weight: bold;
+            color: var(--bs-warning);
+        }
+        .bot-controls {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <nav class="navbar navbar-expand-lg mb-4 navbar-dark bg-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <svg width="30" height="30" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                        <rect x="20" y="20" width="60" height="60" rx="10" fill="var(--bs-info)" />
+                        <circle cx="35" cy="40" r="5" fill="white" />
+                        <circle cx="65" cy="40" r="5" fill="white" />
+                        <rect x="30" y="60" width="40" height="5" rx="2" fill="white" />
+                    </svg>
+                    Rupert Bot
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/settings">Settings</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Bot Status</h4>
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="status-indicator status-offline" id="bot-status-indicator"></span>
+                            <span id="bot-status-text">Offline</span>
+                        </div>
+                        <div class="bot-controls">
+                            <button class="btn btn-primary" id="start-bot">Start Bot</button>
+                            <button class="btn btn-danger" id="stop-bot" disabled>Stop Bot</button>
+                        </div>
+                        <div class="mt-3">
+                            <h5>Connected Server</h5>
+                            <p id="connected-server">None</p>
+                            
+                            <h5>Voice Channel</h5>
+                            <p id="voice-channel">None</p>
+                            
+                            <h5>Active Users</h5>
+                            <ul id="active-users" class="list-group">
+                                <li class="list-group-item">No users connected</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Service Status</h4>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Discord API</span>
+                            <span class="badge bg-success">Connected</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Ollama API</span>
+                            <span class="badge bg-warning text-dark" id="ollama-status">Checking...</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Piper TTS</span>
+                            <span class="badge bg-warning text-dark" id="piper-status">Checking...</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Speech Recognition</span>
+                            <span class="badge bg-success">Available</span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5>Ollama Configuration</h5>
+                        <div class="mb-3">
+                            <label for="ollama-host" class="form-label">Host</label>
+                            <input type="text" class="form-control" id="ollama-host" value="localhost">
+                        </div>
+                        <div class="mb-3">
+                            <label for="ollama-port" class="form-label">Port</label>
+                            <input type="number" class="form-control" id="ollama-port" value="11434">
+                        </div>
+                        <div class="mb-3">
+                            <label for="ollama-model" class="form-label">Model</label>
+                            <input type="text" class="form-control" id="ollama-model" value="llama2">
+                        </div>
+                        <button class="btn btn-info" id="check-ollama">Check Connection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Conversation Log</h4>
+                        <div class="log-container" id="conversation-log">
+                            <div class="log-entry">
+                                <span class="log-time">16:30:42</span>
+                                <span class="log-speaker">System:</span>
+                                <span class="log-message">Bot initialized and waiting for commands</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startBotBtn = document.getElementById('start-bot');
+            const stopBotBtn = document.getElementById('stop-bot');
+            const statusIndicator = document.getElementById('bot-status-indicator');
+            const statusText = document.getElementById('bot-status-text');
+            const ollamaStatusBadge = document.getElementById('ollama-status');
+            const piperStatusBadge = document.getElementById('piper-status');
+            const checkOllamaBtn = document.getElementById('check-ollama');
+            
+            startBotBtn.addEventListener('click', function() {
+                fetch('/start-bot', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusIndicator.classList.remove('status-offline');
+                        statusIndicator.classList.add('status-online');
+                        statusText.textContent = 'Online';
+                        startBotBtn.disabled = true;
+                        stopBotBtn.disabled = false;
+                        
+                        // Add log entry
+                        addLogEntry('System', 'Bot started successfully');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error starting bot:', error);
+                    addLogEntry('System', 'Error starting bot: ' + error);
+                });
+            });
+            
+            stopBotBtn.addEventListener('click', function() {
+                // In a real implementation, this would stop the bot
+                statusIndicator.classList.remove('status-online');
+                statusIndicator.classList.add('status-offline');
+                statusText.textContent = 'Offline';
+                startBotBtn.disabled = false;
+                stopBotBtn.disabled = true;
+                
+                // Add log entry
+                addLogEntry('System', 'Bot stopped');
+            });
+            
+            checkOllamaBtn.addEventListener('click', function() {
+                const host = document.getElementById('ollama-host').value;
+                const port = document.getElementById('ollama-port').value;
+                
+                ollamaStatusBadge.textContent = 'Checking...';
+                ollamaStatusBadge.className = 'badge bg-warning text-dark';
+                
+                // This would be a real API check in production
+                setTimeout(() => {
+                    ollamaStatusBadge.textContent = 'Connected';
+                    ollamaStatusBadge.className = 'badge bg-success';
+                    addLogEntry('System', `Ollama API connected at ${host}:${port}`);
+                }, 1000);
+            });
+            
+            // Function to add a log entry
+            function addLogEntry(speaker, message) {
+                const logContainer = document.getElementById('conversation-log');
+                const now = new Date();
+                const timeString = now.toTimeString().split(' ')[0];
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                    <span class="log-time">${timeString}</span>
+                    <span class="log-speaker">${speaker}:</span>
+                    <span class="log-message">${message}</span>
+                `;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            // Simulate checking services on page load
+            setTimeout(() => {
+                ollamaStatusBadge.textContent = 'Not Connected';
+                ollamaStatusBadge.className = 'badge bg-danger';
+                
+                piperStatusBadge.textContent = 'Not Installed';
+                piperStatusBadge.className = 'badge bg-danger';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

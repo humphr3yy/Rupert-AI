@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rupert Bot Settings</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <style>
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--bs-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <nav class="navbar navbar-expand-lg mb-4 navbar-dark bg-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <svg width="30" height="30" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                        <rect x="20" y="20" width="60" height="60" rx="10" fill="var(--bs-info)" />
+                        <circle cx="35" cy="40" r="5" fill="white" />
+                        <circle cx="65" cy="40" r="5" fill="white" />
+                        <rect x="30" y="60" width="40" height="5" rx="2" fill="white" />
+                    </svg>
+                    Rupert Bot
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/settings">Settings</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Bot Settings</h2>
+                <form id="bot-settings-form">
+                    <div class="settings-section">
+                        <h4>Discord Configuration</h4>
+                        <div class="mb-3">
+                            <label for="discord-token" class="form-label">Discord Bot Token</label>
+                            <input type="password" class="form-control" id="discord-token" name="discord_token" placeholder="Enter your Discord bot token">
+                            <div class="form-text">
+                                This is required for the bot to connect to Discord. Never share this token.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="command-prefix" class="form-label">Command Prefix</label>
+                            <input type="text" class="form-control" id="command-prefix" name="command_prefix" value="!" maxlength="5">
+                            <div class="form-text">
+                                The character(s) used before commands, e.g., !join, !leave
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>Ollama Configuration</h4>
+                        <div class="mb-3">
+                            <label for="ollama-host" class="form-label">Ollama Host</label>
+                            <input type="text" class="form-control" id="ollama-host" name="ollama_host" value="localhost">
+                        </div>
+                        <div class="mb-3">
+                            <label for="ollama-port" class="form-label">Ollama Port</label>
+                            <input type="number" class="form-control" id="ollama-port" name="ollama_port" value="11434">
+                        </div>
+                        <div class="mb-3">
+                            <label for="ollama-model" class="form-label">Ollama Model</label>
+                            <input type="text" class="form-control" id="ollama-model" name="ollama_model" value="llama2">
+                            <div class="form-text">
+                                The name of the model you have loaded in Ollama
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="system-prompt" class="form-label">AI System Prompt</label>
+                            <textarea class="form-control" id="system-prompt" name="system_prompt" rows="3">You are Rupert, a friendly and helpful AI assistant in a Discord voice channel. Keep your responses concise and natural for voice conversations.</textarea>
+                            <div class="form-text">
+                                This sets the personality and behavior of the AI
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>Voice and Transcription Settings</h4>
+                        <div class="mb-3">
+                            <label for="piper-voice" class="form-label">Piper Voice Model</label>
+                            <select class="form-select" id="piper-voice" name="piper_voice">
+                                <option value="en_US-lessac-medium" selected>English US (Male)</option>
+                                <option value="en_US-libritts-high">English US (Female High Quality)</option>
+                                <option value="de_DE-thorsten-medium">German</option>
+                                <option value="fr_FR-siwis-medium">French</option>
+                                <option value="es_ES-m-medium">Spanish</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="speech-language" class="form-label">Speech Recognition Language</label>
+                            <select class="form-select" id="speech-language" name="speech_language">
+                                <option value="en-US" selected>English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="de-DE">German</option>
+                                <option value="fr-FR">French</option>
+                                <option value="es-ES">Spanish</option>
+                                <option value="ja-JP">Japanese</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="tts-enabled" name="tts_enabled" checked>
+                                <label class="form-check-label" for="tts-enabled">Enable Text-to-Speech</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>Advanced Settings</h4>
+                        <div class="mb-3">
+                            <label for="energy-threshold" class="form-label">Voice Detection Sensitivity</label>
+                            <input type="range" class="form-range" min="100" max="1000" step="50" id="energy-threshold" name="energy_threshold" value="300">
+                            <div class="d-flex justify-content-between">
+                                <small>Low (More Sensitive)</small>
+                                <small>High (Less Sensitive)</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pause-threshold" class="form-label">Pause Threshold</label>
+                            <input type="range" class="form-range" min="0.3" max="2.0" step="0.1" id="pause-threshold" name="pause_threshold" value="0.8">
+                            <div class="d-flex justify-content-between">
+                                <small>Short Pauses</small>
+                                <small>Long Pauses</small>
+                            </div>
+                            <div class="form-text">
+                                Time in seconds of silence needed before considering an utterance complete
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="dynamic-energy" name="dynamic_energy" checked>
+                                <label class="form-check-label" for="dynamic-energy">Dynamic Energy Adjustment</label>
+                            </div>
+                            <div class="form-text">
+                                Automatically adjusts to ambient noise levels
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary" id="reset-defaults">Reset to Defaults</button>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsForm = document.getElementById('bot-settings-form');
+            const resetButton = document.getElementById('reset-defaults');
+            
+            // Handle form submission
+            settingsForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // In a real implementation, this would save settings to the server
+                const formData = new FormData(settingsForm);
+                const settings = Object.fromEntries(formData.entries());
+                
+                console.log('Saving settings:', settings);
+                
+                // Show success alert
+                alert('Settings saved successfully!');
+            });
+            
+            // Handle reset button
+            resetButton.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                    settingsForm.reset();
+                    // Additional reset logic would go here for any custom elements
+                }
+            });
+            
+            // Example of loading settings from the server (would be implemented in a real app)
+            function loadSettings() {
+                // This would be an API call in a real implementation
+                const mockSettings = {
+                    discord_token: '',
+                    command_prefix: '!',
+                    ollama_host: 'localhost',
+                    ollama_port: 11434,
+                    ollama_model: 'llama2',
+                    system_prompt: 'You are Rupert, a friendly and helpful AI assistant in a Discord voice channel. Keep your responses concise and natural for voice conversations.',
+                    piper_voice: 'en_US-lessac-medium',
+                    speech_language: 'en-US',
+                    tts_enabled: true,
+                    energy_threshold: 300,
+                    pause_threshold: 0.8,
+                    dynamic_energy: true
+                };
+                
+                // Set form values from settings
+                for (const [key, value] of Object.entries(mockSettings)) {
+                    const element = settingsForm.elements[key];
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = value;
+                        } else {
+                            element.value = value;
+                        }
+                    }
+                }
+            }
+            
+            // Load settings when the page loads
+            loadSettings();
+        });
+    </script>
+</body>
+</html>
