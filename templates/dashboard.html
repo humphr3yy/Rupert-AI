@@ -462,9 +462,9 @@
             const stopBotBtn = document.getElementById('stop-bot');
             const statusIndicator = document.getElementById('bot-status-indicator');
             const statusText = document.getElementById('bot-status-text');
-            const ollamaStatusBadge = document.getElementById('ollama-status');
+            const geminiStatusBadge = document.getElementById('gemini-status');
             const piperStatusBadge = document.getElementById('piper-status');
-            const checkOllamaBtn = document.getElementById('check-ollama');
+            const checkGeminiBtn = document.getElementById('check-gemini');
             
             startBotBtn.addEventListener('click', function() {
                 fetch('/start-bot', {
@@ -501,19 +501,43 @@
                 addLogEntry('System', 'Bot stopped');
             });
             
-            checkOllamaBtn.addEventListener('click', function() {
-                const host = document.getElementById('ollama-host').value;
-                const port = document.getElementById('ollama-port').value;
+            checkGeminiBtn.addEventListener('click', function() {
+                const apiKey = document.getElementById('gemini-api-key').value;
+                const textModel = document.getElementById('gemini-text-model').value;
+                const visionModel = document.getElementById('gemini-vision-model').value;
                 
-                ollamaStatusBadge.textContent = 'Checking...';
-                ollamaStatusBadge.className = 'badge bg-warning text-dark';
+                geminiStatusBadge.textContent = 'Checking...';
+                geminiStatusBadge.className = 'badge bg-warning text-dark';
                 
-                // This would be a real API check in production
-                setTimeout(() => {
-                    ollamaStatusBadge.textContent = 'Connected';
-                    ollamaStatusBadge.className = 'badge bg-success';
-                    addLogEntry('System', `Ollama API connected at ${host}:${port}`);
-                }, 1000);
+                // Make a real API check to the backend
+                fetch('/check-gemini', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        api_key: apiKey,
+                        text_model: textModel,
+                        vision_model: visionModel
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        geminiStatusBadge.textContent = 'Connected';
+                        geminiStatusBadge.className = 'badge bg-success';
+                        addLogEntry('System', `Gemini API connected successfully. Models: ${textModel}, ${visionModel}`);
+                    } else {
+                        geminiStatusBadge.textContent = 'Error';
+                        geminiStatusBadge.className = 'badge bg-danger';
+                        addLogEntry('System', `Gemini API error: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    geminiStatusBadge.textContent = 'Error';
+                    geminiStatusBadge.className = 'badge bg-danger';
+                    addLogEntry('System', `Gemini API error: ${error.message}`);
+                });
             });
             
             // Function to add a log entry
@@ -536,8 +560,8 @@
             
             // Simulate checking services on page load
             setTimeout(() => {
-                ollamaStatusBadge.textContent = 'Not Connected';
-                ollamaStatusBadge.className = 'badge bg-danger';
+                geminiStatusBadge.textContent = 'Not Connected';
+                geminiStatusBadge.className = 'badge bg-danger';
                 
                 piperStatusBadge.textContent = 'Not Installed';
                 piperStatusBadge.className = 'badge bg-danger';
