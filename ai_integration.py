@@ -15,12 +15,9 @@ class GeminiAPI:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
-        genai.configure(api_key=self.api_key, transport="rest")
-        model_name = "gemini-pro"  # Correct model name
-        vision_model_name = "gemini-pro-vision"  # Correct vision model name
-        
-        self.text_model = genai.GenerativeModel(model_name)
-        self.vision_model = genai.GenerativeModel(vision_model_name)
+        genai.configure(api_key=self.api_key)
+        self.text_model = genai.GenerativeModel('gemini-1.0-pro')
+        self.vision_model = genai.GenerativeModel('gemini-1.0-pro-vision')
 
     async def generate_response(self, prompt: str, system_prompt: str = None) -> str:
         """Generate a response using Gemini"""
