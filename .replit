@@ -1,0 +1,60 @@
+modules = ["python-3.11"]
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "python"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "python"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = """
+python -c \"import bot; import transcription; import ai_integration; import tts; import utils; import config; print('All modules imported successfully'); print('Configuration:'); print(f'Command Prefix: {config.COMMAND_PREFIX}'); print(f'Ollama API: {config.OLLAMA_HOST}:{config.OLLAMA_PORT}, Model: {config.OLLAMA_MODEL}'); print('
+Bot Structure:'); print('- Transcriber module:', 'Complete' if hasattr(transcription, 'Transcriber') else 'Incomplete'); print('- OllamaAPI module:', 'Complete' if hasattr(ai_integration, 'OllamaAPI') else 'Incomplete'); print('- PiperTTS module:', 'Complete' if hasattr(tts, 'PiperTTS') else 'Incomplete'); print('- Utils:', ', '.join([f for f in dir(utils) if not f.startswith('_') and callable(getattr(utils, f))])); print('
+Bot Components:'); print('- Event handlers:', 'Implemented' if 'setup_events' in dir(bot.RupertBot) else 'Missing'); print('- Commands:', 'Implemented' if 'register_commands' in dir(bot.RupertBot) else 'Missing'); print('- Voice processing:', 'Implemented' if 'listen_and_transcribe' in dir(bot.RupertBot) else 'Missing'); print('- Rupert interaction:', 'Implemented' if 'handle_rupert_interaction' in dir(bot.RupertBot) else 'Missing')\""""
+
+[[ports]]
+localPort = 5000
+externalPort = 80
