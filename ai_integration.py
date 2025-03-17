@@ -1,10 +1,9 @@
-import aiohttp
+
+import os
 import logging
 import json
 import base64
 from typing import Optional, Dict, Any, List
-import config
-import os
 import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ class GeminiAPI:
             logger.error(f"Error with Gemini API: {e}")
             return "I'm having trouble thinking right now. Can you try again?"
 
-    async def generate_vision_response(self, prompt: str, base64_image: str, system_prompt: str = None) -> str:
+    async def generate_vision_response(self, prompt: str, image_path: str, system_prompt: str = None) -> str:
         """Generate a response from vision model based on text prompt and image"""
         try:
             if system_prompt:
@@ -43,8 +42,9 @@ class GeminiAPI:
             else:
                 full_prompt = prompt
 
-            # Decode base64 image
-            image_data = base64.b64decode(base64_image)
+            # Read image file
+            with open(image_path, 'rb') as img_file:
+                image_data = img_file.read()
 
             # Create image parts for the model
             response = await self.vision_model.generate_content_async([
