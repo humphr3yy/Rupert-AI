@@ -11,7 +11,7 @@ from typing import Dict, Optional, List, Tuple, Union, Any
 
 from transcription import Transcriber
 from ai_integration import GeminiAPI
-from tts import PiperTTS
+from tts import GoogleTTS
 from utils import create_temp_file, cleanup_temp_file, capture_screenshot, analyze_image_with_vision_model, detect_content_type, analyze_conversation_intent
 from config import (
     COMMAND_PREFIX, SYSTEM_PROMPT, VISION_SYSTEM_PROMPT, DM_SYSTEM_PROMPT, 
