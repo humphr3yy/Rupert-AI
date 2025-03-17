@@ -239,7 +239,7 @@ class RupertBot:
                 context = self.get_recent_conversation_context(guild_id)
                 
                 # Use the AI to analyze the conversation intent
-                analysis = await self.ollama_api.analyze_conversation_context(transcript, context)
+                analysis = await self.ai_api.analyze_conversation_context(transcript, context)
                 
                 # Update our decision based on the AI analysis
                 is_addressing_rupert = analysis.get("is_addressing_rupert", is_addressing_rupert)
@@ -373,7 +373,7 @@ class RupertBot:
                                                 response = await analyze_image_with_vision_model(
                                                     screenshot_path,
                                                     prompt,
-                                                    self.ollama_api,
+                                                    self.ai_api,
                                                     content_type
                                                 )
                                                 
@@ -461,7 +461,7 @@ class RupertBot:
             ai_response = await analyze_image_with_vision_model(
                 screenshot_path, 
                 vision_prompt,
-                self.ollama_api,
+                self.ai_api,
                 content_type
             )
             
@@ -508,9 +508,9 @@ class RupertBot:
             else:
                 full_prompt = prompt
             
-            # Get AI response from Ollama
-            ai_response = await self.ollama_api.generate_response(full_prompt)
-            logger.info(f"Ollama response: {ai_response}")
+            # Get AI response from Gemini
+            ai_response = await self.ai_api.generate_response(full_prompt)
+            logger.info(f"Gemini response: {ai_response}")
             
             # Convert AI response to speech and play it
             audio_file = await self.tts.text_to_speech(ai_response)
@@ -534,7 +534,7 @@ class RupertBot:
                 cleanup_temp_file(audio_file)
     
     def clean_transcript_for_prompt(self, transcript: str) -> str:
-        """Clean the transcript to make it a better prompt for Ollama"""
+        """Clean the transcript to make it a better prompt for Gemini"""
         # Remove "Rupert" mentions and prepare as a prompt
         lower_transcript = transcript.lower()
         
@@ -635,8 +635,8 @@ class RupertBot:
         if context:
             prompt += f"Recent conversation history:\n{context}\n\n"
         
-        # Send to Ollama with the DM system prompt
-        response = await self.ollama_api.generate_response(prompt, DM_SYSTEM_PROMPT)
+        # Send to Gemini with the DM system prompt
+        response = await self.ai_api.generate_response(prompt, DM_SYSTEM_PROMPT)
         
         return response
     
@@ -667,8 +667,8 @@ class RupertBot:
         if context:
             prompt += f"Recent conversation history in this channel:\n{context}\n\n"
         
-        # Send to Ollama with the text channel system prompt
-        response = await self.ollama_api.generate_response(prompt, TEXT_CHANNEL_SYSTEM_PROMPT)
+        # Send to Gemini with the text channel system prompt
+        response = await self.ai_api.generate_response(prompt, TEXT_CHANNEL_SYSTEM_PROMPT)
         
         return response
     
@@ -739,7 +739,7 @@ class RupertBot:
                 context = await self.get_message_history(message.channel, 5)
                 
                 # Analyze using AI
-                analysis = await self.ollama_api.analyze_conversation_context(message.content, context)
+                analysis = await self.ai_api.analyze_conversation_context(message.content, context)
                 
                 # Update based on AI analysis
                 is_addressing_rupert = analysis.get("is_addressing_rupert", is_addressing_rupert)
