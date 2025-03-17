@@ -40,7 +40,7 @@ class RupertBot:
         # Initialize components
         self.transcriber = Transcriber()
         self.ai_api = GeminiAPI()  # Using Gemini API instead of Ollama
-        self.tts = PiperTTS()
+        self.tts = GoogleTTS()
         
         # Voice client tracking
         self.voice_clients: Dict[int, discord.VoiceClient] = {}
