@@ -525,11 +525,11 @@ class RupertBot:
         """Play an audio file in the voice channel and clean up afterwards"""
         if voice_client and voice_client.is_connected():
             try:
-                # Convert audio to PCM
+                # Convert audio to PCM with better options
                 audio = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(
                     audio_file,
-                    before_options='-nostdin',
-                    options='-vn -b:a 64k'
+                    before_options='-nostdin -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+                    options='-vn -b:a 64k -bufsize 64k'
                 ))
                 
                 # Set appropriate volume
@@ -538,14 +538,27 @@ class RupertBot:
                 def after_playing(error):
                     if error:
                         logger.error(f"Error in playback: {error}")
-                    cleanup_temp_file(audio_file)
+                    try:
+                        cleanup_temp_file(audio_file)
+                    except Exception as e:
+                        logger.error(f"Error cleaning up audio file: {e}")
                 
-                # Play the audio
-                voice_client.play(audio, after=after_playing)
-                
-                # Wait for playback to complete
-                while voice_client.is_playing():
-                    await asyncio.sleep(0.2)
+                # Play the audio with error handling
+                try:
+                    voice_client.play(audio, after=after_playing)
+                    
+                    # Wait for playback to complete with timeout
+                    start_time = time.time()
+                    while voice_client.is_playing():
+                        await asyncio.sleep(0.1)
+                        if time.time() - start_time > 30:  # 30 second timeout
+                            voice_client.stop()
+                            logger.warning("Audio playback timed out")
+                            break
+                except Exception as e:
+                    logger.error(f"Error during playback: {e}")
+                    if voice_client.is_playing():
+                        voice_client.stop()
                     
             except Exception as e:
                 logger.error(f"Error playing audio: {str(e)}")
