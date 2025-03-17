@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file if present
 load_dotenv()
 
+# Runtime Configuration
+RUN_BOT_DIRECTLY = os.getenv("RUN_BOT_DIRECTLY", "true").lower() == "true"
+
 # Discord Bot Configuration
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "!")
 

@@ -62,7 +62,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "RUN_BOT_DIRECTLY=true python main.py"
 
 [[ports]]
 localPort = 5000
