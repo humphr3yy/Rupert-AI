@@ -525,19 +525,35 @@ class RupertBot:
         """Play an audio file in the voice channel and clean up afterwards"""
         if voice_client and voice_client.is_connected():
             try:
-                # Create audio source with FFmpeg
-                source = discord.FFmpegPCMAudio(audio_file, options='-loglevel error')
+                # Wait a moment to ensure voice connection is ready
+                await asyncio.sleep(0.5)
                 
-                # Play the audio
+                # Create audio source with FFmpeg
+                source = discord.FFmpegPCMAudio(
+                    audio_file,
+                    options='-loglevel error -threads 4'
+                )
+                
+                # Play the audio with a timeout
                 if not voice_client.is_playing():
                     voice_client.play(source)
+                    timeout = 30  # Maximum wait time in seconds
                     
-                    # Wait until the audio finishes playing
+                    # Wait until the audio finishes playing or timeout
+                    start_time = time.time()
                     while voice_client.is_playing():
+                        if time.time() - start_time > timeout:
+                            voice_client.stop()
+                            logger.warning("Audio playback timed out")
+                            break
                         await asyncio.sleep(0.1)
+                        
             except Exception as e:
-                logger.error(f"Error playing audio: {e}")
+                logger.error(f"Error playing audio: {str(e)}")
             finally:
+                # Ensure the source is cleaned up
+                if hasattr(source, 'cleanup'):
+                    source.cleanup()
                 # Clean up the temporary audio file
                 cleanup_temp_file(audio_file)
     
