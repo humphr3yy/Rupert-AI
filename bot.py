@@ -493,7 +493,7 @@ class RupertBot:
         """Handle an interaction with Rupert by generating and playing a response"""
         logger.info(f"Handling direct interaction with Rupert from {speaker}: {transcript}")
         
-        # Clean the transcript to use as a prompt for Ollama
+        # Clean the transcript to use as a prompt for Gemini
         prompt = self.clean_transcript_for_prompt(transcript)
         
         try:

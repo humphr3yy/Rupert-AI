@@ -131,14 +131,14 @@ async def capture_screenshot(discord_client, channel_id: int) -> Optional[str]:
         logger.error(f"Error during screen share capture: {e}")
         return None
 
-async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_api, content_type: str = None) -> str:
+async def analyze_image_with_vision_model(image_path: str, prompt: str, gemini_api, content_type: str = None) -> str:
     """
-    Analyze an image using a vision-capable AI model in Ollama
+    Analyze an image using a vision-capable AI model in Gemini
     
     Args:
         image_path: Path to the image file
         prompt: Text prompt to guide the image analysis
-        ollama_api: Instance of the OllamaAPI class
+        gemini_api: Instance of the GeminiAPI class
         content_type: Type of content detected in the image (youtube, chess, etc.)
         
     Returns:
@@ -186,10 +186,7 @@ async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_a
                 return ("I can see your screen share. It appears to be showing some content, "
                         "but I would need a more specific question to give you a detailed analysis.")
         
-        # For a real implementation, we would use the Ollama API's multimodal capabilities
-        # with a model that supports vision (like llava or bakllava)
-        base64_image = base64.b64encode(image_data).decode('utf-8')
-        
+        # For a real implementation, we would use Gemini's vision capabilities
         # Select the appropriate system prompt based on content type
         system_prompt = None
         if content_type == "youtube":
@@ -205,8 +202,8 @@ async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_a
             from config import GEOGUESSER_SYSTEM_PROMPT
             system_prompt = GEOGUESSER_SYSTEM_PROMPT
         
-        # Analyze the image using the vision model through Ollama API
-        analysis = await ollama_api.generate_vision_response(prompt, base64_image, system_prompt)
+        # Analyze the image using the vision model through Gemini API
+        analysis = await gemini_api.generate_vision_response(prompt, image_path, system_prompt)
         return analysis
         
     except Exception as e:
