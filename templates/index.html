@@ -12,14 +12,10 @@
             --rupert-cyan: rgba(0, 255, 255, 0.7);
         }
         body {
-            background: linear-gradient(45deg, var(--rupert-pink), var(--rupert-cyan), var(--rupert-yellow));
-            background-size: 400% 400%;
-            animation: rupert-bg 15s ease infinite;
-        }
-        @keyframes rupert-bg {
-            0% { background-position: 0% 50% }
-            50% { background-position: 100% 50% }
-            100% { background-position: 0% 50% }
+            background-image: url('/static/images/background.png');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
         }
         .card {
             height: 100%;
