@@ -73,10 +73,14 @@
                         <h4>Gemini API Configuration</h4>
                         <div class="mb-3">
                             <label for="gemini-api-key" class="form-label">Gemini API Key</label>
-                            <input type="password" class="form-control" id="gemini-api-key" name="gemini_api_key" placeholder="Enter your Gemini API key">
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="gemini-api-key" name="gemini_api_key" placeholder="Enter your Gemini API key">
+                                <button class="btn btn-outline-secondary" type="button" id="check-gemini-button">Test Connection</button>
+                            </div>
                             <div class="form-text">
                                 Your Google Gemini API key. Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
                             </div>
+                            <div id="gemini-status" class="mt-2 d-none"></div>
                         </div>
                         <div class="mb-3">
                             <label for="system-prompt" class="form-label">AI System Prompt</label>
@@ -164,6 +168,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const settingsForm = document.getElementById('bot-settings-form');
             const resetButton = document.getElementById('reset-defaults');
+            const checkGeminiButton = document.getElementById('check-gemini-button');
+            const geminiStatusDiv = document.getElementById('gemini-status');
             
             // Handle form submission
             settingsForm.addEventListener('submit', function(e) {
@@ -186,6 +192,61 @@
                     // Additional reset logic would go here for any custom elements
                 }
             });
+            
+            // Handle test Gemini API button
+            checkGeminiButton.addEventListener('click', function() {
+                const apiKey = document.getElementById('gemini-api-key').value;
+                
+                if (!apiKey) {
+                    showGeminiStatus('error', 'Please enter an API key first');
+                    return;
+                }
+                
+                showGeminiStatus('info', 'Testing connection to Gemini API...');
+                
+                fetch('/check-gemini', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ api_key: apiKey })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showGeminiStatus('success', data.message);
+                        
+                        // If models are returned, show them
+                        if (data.models && data.models.length > 0) {
+                            const modelsList = document.createElement('small');
+                            modelsList.classList.add('d-block', 'mt-1');
+                            modelsList.textContent = `Available models: ${data.models.join(', ')}`;
+                            geminiStatusDiv.appendChild(modelsList);
+                        }
+                    } else {
+                        showGeminiStatus('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    showGeminiStatus('error', `Error: ${error.message}`);
+                });
+            });
+            
+            // Helper function to show Gemini API status
+            function showGeminiStatus(type, message) {
+                geminiStatusDiv.className = 'mt-2 alert';
+                
+                if (type === 'error') {
+                    geminiStatusDiv.classList.add('alert-danger');
+                } else if (type === 'success') {
+                    geminiStatusDiv.classList.add('alert-success');
+                } else {
+                    geminiStatusDiv.classList.add('alert-info');
+                }
+                
+                geminiStatusDiv.textContent = message;
+                geminiStatusDiv.classList.remove('d-none');
+            }
             
             // Example of loading settings from the server (would be implemented in a real app)
             function loadSettings() {
