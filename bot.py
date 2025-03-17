@@ -12,11 +12,14 @@ from typing import Dict, Optional, List, Tuple, Union, Any
 from transcription import Transcriber
 from ai_integration import OllamaAPI
 from tts import PiperTTS
-from utils import create_temp_file, cleanup_temp_file, capture_screenshot, analyze_conversation_intent
+from utils import create_temp_file, cleanup_temp_file, capture_screenshot, analyze_image_with_vision_model, detect_content_type, analyze_conversation_intent
 from config import (
     COMMAND_PREFIX, OLLAMA_HOST, OLLAMA_PORT, OLLAMA_MODEL, OLLAMA_VISION_MODEL,
     SYSTEM_PROMPT, VISION_SYSTEM_PROMPT, DM_SYSTEM_PROMPT, TEXT_CHANNEL_SYSTEM_PROMPT,
-    VISION_ENABLED, VISION_CONVERSATION_THRESHOLD,
+    YOUTUBE_SYSTEM_PROMPT, CHESS_SYSTEM_PROMPT, CHECKERS_SYSTEM_PROMPT, GEOGUESSER_SYSTEM_PROMPT,
+    VISION_ENABLED, VISION_CONVERSATION_THRESHOLD, SCREENSHOT_INTERVAL,
+    YOUTUBE_DETECTION_ENABLED, BOARD_GAMES_DETECTION_ENABLED, GEOGUESSER_DETECTION_ENABLED,
+    CHESS_ANALYSIS_DEPTH, PROACTIVE_COMMENTARY,
     INTENT_ANALYSIS_ENABLED, INTENT_CONFIDENCE_THRESHOLD,
     TEXT_ENABLED, MESSAGE_HISTORY_LIMIT, TEXT_COOLDOWN_SECONDS
 )

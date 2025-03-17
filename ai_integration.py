@@ -63,23 +63,32 @@ class OllamaAPI:
             logger.error(f"Unexpected error with Ollama API: {e}")
             return "Something unexpected happened. Can you try again later?"
     
-    async def generate_vision_response(self, prompt: str, base64_image: str) -> str:
+    async def generate_vision_response(self, prompt: str, base64_image: str, system_prompt: str = None) -> str:
         """
         Generate a response from a vision model based on text prompt and image
         
         Args:
             prompt: Text prompt to guide the image analysis
             base64_image: Base64-encoded image data
+            system_prompt: Optional custom system prompt specific to the content type
             
         Returns:
             Generated text response describing the image
         """
         try:
+            # Use the provided system prompt or fall back to the default vision prompt
+            if system_prompt is None:
+                system_prompt = config.VISION_SYSTEM_PROMPT
+                
             # Simplified implementation - real implementation would use appropriate
             # multimodal API endpoints for Ollama's vision models
             
             # Using the chat endpoint with multimodal data
             messages = [
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
                 {
                     "role": "user",
                     "content": [

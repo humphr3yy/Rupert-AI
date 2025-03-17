@@ -131,7 +131,7 @@ async def capture_screenshot(discord_client, channel_id: int) -> Optional[str]:
         logger.error(f"Error during screen share capture: {e}")
         return None
 
-async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_api) -> str:
+async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_api, content_type: str = None) -> str:
     """
     Analyze an image using a vision-capable AI model in Ollama
     
@@ -139,6 +139,7 @@ async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_a
         image_path: Path to the image file
         prompt: Text prompt to guide the image analysis
         ollama_api: Instance of the OllamaAPI class
+        content_type: Type of content detected in the image (youtube, chess, etc.)
         
     Returns:
         Analysis result as text
@@ -152,13 +153,35 @@ async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_a
         if len(image_data) == 0:
             logger.warning("Empty image file, generating simulated analysis for demo")
             
-            # This is a simulated response for demonstration purposes
-            if "geoguesser" in prompt.lower():
+            # Generate appropriate simulated response based on content type
+            if content_type == "youtube":
+                return ("I can see you're watching a YouTube video. It looks like a documentary about "
+                        "marine life. The narrator is currently explaining about coral reefs and their "
+                        "importance to ocean ecosystems. I can see stunning footage of colorful fish "
+                        "swimming through coral formations. The video appears to be from a nature channel "
+                        "with high production quality.")
+            
+            elif content_type == "chess":
+                return ("I can see you're playing chess. White has just moved the knight to f3, developing "
+                        "a piece and controlling the center. Black has responded with e5, also fighting for "
+                        "central control. The position looks balanced but with interesting tactical possibilities. "
+                        "If white continues with d4, it would challenge black's central pawn and open lines for "
+                        "the bishop. This appears to be in the early opening phase of the game.")
+            
+            elif content_type == "checkers":
+                return ("I can see you're playing checkers. Red has just moved a piece to the king's row "
+                        "and gotten a king. Black has several pieces in strong defensive positions. "
+                        "Red seems to have a slight advantage with one more piece on the board. "
+                        "Black should be careful about the potential double jump that red could execute "
+                        "on the right side of the board.")
+            
+            elif content_type == "geoguesser":
                 return ("Based on the screen share, I can see this is a GeoGuesser game. "
-                        "From the architectural style, street signs, and vegetation, "
-                        "this appears to be somewhere in Northern Europe, possibly Sweden or Norway. "
-                        "The street signs have that distinctive Scandinavian design, and I notice some "
-                        "text that looks like Swedish on one of the storefronts.")
+                        "I notice street signs in Cyrillic letters, which suggests we're in an Eastern European "
+                        "or Russian-speaking country. The architecture features those distinctive onion domes "
+                        "on a church in the distance, and I can see a sign that says 'Москва' which means 'Moscow'. "
+                        "Given these clues, we're definitely in Russia, most likely in or near Moscow.")
+            
             else:
                 return ("I can see your screen share. It appears to be showing some content, "
                         "but I would need a more specific question to give you a detailed analysis.")
@@ -167,15 +190,64 @@ async def analyze_image_with_vision_model(image_path: str, prompt: str, ollama_a
         # with a model that supports vision (like llava or bakllava)
         base64_image = base64.b64encode(image_data).decode('utf-8')
         
+        # Select the appropriate system prompt based on content type
+        system_prompt = None
+        if content_type == "youtube":
+            from config import YOUTUBE_SYSTEM_PROMPT
+            system_prompt = YOUTUBE_SYSTEM_PROMPT
+        elif content_type == "chess":
+            from config import CHESS_SYSTEM_PROMPT
+            system_prompt = CHESS_SYSTEM_PROMPT
+        elif content_type == "checkers":
+            from config import CHECKERS_SYSTEM_PROMPT
+            system_prompt = CHECKERS_SYSTEM_PROMPT
+        elif content_type == "geoguesser":
+            from config import GEOGUESSER_SYSTEM_PROMPT
+            system_prompt = GEOGUESSER_SYSTEM_PROMPT
+        
         # Analyze the image using the vision model through Ollama API
-        # This is a simplified version; in reality, we'd need to use a compatible 
-        # API endpoint that supports multimodal inputs
-        analysis = await ollama_api.generate_vision_response(prompt, base64_image)
+        analysis = await ollama_api.generate_vision_response(prompt, base64_image, system_prompt)
         return analysis
         
     except Exception as e:
         logger.error(f"Error analyzing image: {e}")
         return "I'm having trouble analyzing what's on the screen right now."
+
+def detect_content_type(image_path: str) -> str:
+    """
+    Detect the type of content in a screenshot
+    
+    Args:
+        image_path: Path to the screenshot image
+        
+    Returns:
+        String identifying the content type (youtube, chess, checkers, geoguesser, or None)
+    """
+    try:
+        # For a real implementation, this would use image recognition to identify content
+        # Here we'll just simulate detection with placeholder logic
+        
+        # If the file doesn't exist or is empty, return None
+        if not os.path.exists(image_path) or os.path.getsize(image_path) == 0:
+            return None
+            
+        # In a real implementation, we would:
+        # 1. Use image recognition models to detect UI elements characteristic of each application
+        # 2. Look for specific visual patterns (YouTube player controls, chess board grid, etc.)
+        # 3. Use OCR to detect text that might indicate the content type
+        
+        # For this demonstration, we'll just return a random content type 
+        # to simulate the detection process
+        import random
+        content_types = ["youtube", "chess", "checkers", "geoguesser", None]
+        weights = [0.25, 0.25, 0.20, 0.20, 0.10]  # 10% chance of not recognizing anything
+        
+        # In a real implementation, this would be replaced with actual detection logic
+        return random.choices(content_types, weights=weights, k=1)[0]
+        
+    except Exception as e:
+        logger.error(f"Error detecting content type: {e}")
+        return None
 
 def analyze_conversation_intent(transcript: str) -> Tuple[bool, float]:
     """
