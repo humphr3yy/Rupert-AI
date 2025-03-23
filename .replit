@@ -67,7 +67,3 @@ args = "RUN_BOT_DIRECTLY=true python main.py"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
