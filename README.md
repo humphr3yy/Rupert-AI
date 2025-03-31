@@ -211,3 +211,13 @@ This project is released under the MIT License. See the LICENSE file for details
 - Google Gemini API for AI capabilities
 - Piper TTS for high-quality voice synthesis
 - Discord.py for Discord integration
+
+## Credits
+*Thank you* to ***all*** the Developers who worked on this!
+
+*Humphr3yy* / *Kaiden K* - **Creator**, Developer
+
+*Goofygoing* - *Developer*, *Contributer* to ***a lot*** of features and ideas.
+
+An AI Agent - Some people may find the idea of crediting an AI stupid but I think it makes sense, it was a Developer who fixed up garbled code and helped a lot.
+
