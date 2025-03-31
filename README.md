@@ -56,7 +56,7 @@ Rupert is a sophisticated Discord bot leveraging Google's Gemini AI for intellig
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/humphr3yy/Rupert-AI.git]
+   git clone https://github.com/humphr3yy/Rupert-AI.git
    cd rupert-ai
    ```
 
