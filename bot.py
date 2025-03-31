@@ -326,15 +326,45 @@ class RupertBot:
             
         # Keywords that suggest visual analysis is needed
         vision_keywords = [
+            # General screen viewing
             "screen", "showing", "look at", "can you see", "what's on", "what is on",
-            "what do you see", "analyze this", "check this out", "geoguesser",
-            "where am i", "where is this", "what country", "what place"
+            "what do you see", "analyze this", "check this out", "see this", "tell me what you see",
+            
+            # GeoGuessr specific
+            "geoguesser", "geo guesser", "where am i", "where is this", "what country", 
+            "what place", "where do you think", "guess where", "what location", "what city", 
+            "what town", "what continent", "guess the country", "what language", "what flag",
+            "license plate", "street sign", "architecture", "climate", "vegetation",
+            
+            # Content analysis
+            "what's happening", "what is happening", "what's this video", "what game is this",
+            "what are they talking about", "who is this", "what am i watching"
         ]
         
+        # Get content type from last screenshot if available
+        current_content_type = "unknown"
+        if guild_id in self.last_screenshot and os.path.exists(self.last_screenshot[guild_id]):
+            current_content_type = detect_content_type(self.last_screenshot[guild_id])
+            
+        # Add content-specific keywords based on detected content
+        if current_content_type == "geoguesser":
+            geoguesser_keywords = [
+                "clue", "hint", "help me", "driving side", "road sign", "landmark", 
+                "does this look like", "what kind of", "terrain", "what's that", "building style"
+            ]
+            vision_keywords.extend(geoguesser_keywords)
+            
+        # Check if transcript contains any of our keywords
         lower_transcript = transcript.lower()
         for keyword in vision_keywords:
             if keyword in lower_transcript:
                 return True
+                
+        # Special case: If content is GeoGuessr and transcript contains a question
+        # (even without specific keywords), it's likely asking about the location
+        if current_content_type == "geoguesser" and any(q in lower_transcript for q in ["?", "where", "what", "how", "which", "is this", "could this"]):
+            logger.info(f"GeoGuessr content detected with question: {transcript}")
+            return True
                 
         return False
     
@@ -402,7 +432,18 @@ class RupertBot:
                                                 prompt = "What's the current state of this checkers game? Analyze the position and suggest a good move."
                                                 system_prompt = CHECKERS_SYSTEM_PROMPT
                                             elif content_type == "geoguesser" and GEOGUESSER_DETECTION_ENABLED:
-                                                prompt = "Based on what you can see in this GeoGuesser scene, where might this location be? Look for clues."
+                                                # Create detailed prompts for GeoGuessr to make better proactive comments
+                                                prompt_variations = [
+                                                    "Based on the visual clues in this GeoGuesser scene (architecture, vegetation, signage, road markings), where do you think this location is?",
+                                                    "I notice some interesting features in this GeoGuesser location. Can you identify what country this might be based on the visual elements?",
+                                                    "There are some distinctive characteristics in this GeoGuesser scene. What region of the world does this appear to be, and what are the key clues?",
+                                                    "This GeoGuesser location has specific geographical markers. What continent and country do you think this is, and what evidence supports your analysis?",
+                                                    "Looking at this GeoGuessr image, what stands out to you as location-specific identifiers and where might this place be?"
+                                                ]
+                                                
+                                                # Choose a random variation to keep commentary fresh
+                                                import random
+                                                prompt = random.choice(prompt_variations)
                                                 system_prompt = GEOGUESSER_SYSTEM_PROMPT
                                             else:
                                                 # Skip commentary for unknown content
@@ -488,8 +529,16 @@ class RupertBot:
                 system_prompt = CHECKERS_SYSTEM_PROMPT
                 
             elif content_type == "geoguesser" and GEOGUESSER_DETECTION_ENABLED:
-                vision_prompt = f"I'm playing GeoGuesser. {speaker} asked: {clean_transcript}"
-                vision_prompt += " Please analyze the location clues such as architecture, road signs, vegetation, driving side, and other geographical markers."
+                # Craft a detailed prompt for GeoGuessr location analysis
+                vision_prompt = f"I'm playing GeoGuesser and need your help analyzing the location. {speaker} asked: {clean_transcript}\n\n"
+                vision_prompt += "Please analyze the following in the image:\n"
+                vision_prompt += "1. Road signs and text: What language? Any place names? Direction indicators?\n"
+                vision_prompt += "2. Architecture: Building styles, materials, roof types?\n"
+                vision_prompt += "3. Natural environment: Vegetation, terrain, climate indicators?\n"
+                vision_prompt += "4. Road features: Driving side, road markings, guardrails?\n"
+                vision_prompt += "5. Vehicles: License plates, car models, traffic rules?\n"
+                vision_prompt += "6. Cultural indicators: Flags, religious symbols, urban planning?\n\n"
+                vision_prompt += "Based on these clues, where do you think this location is? Be specific about country and region if possible."
                 system_prompt = GEOGUESSER_SYSTEM_PROMPT
                 
             else:
