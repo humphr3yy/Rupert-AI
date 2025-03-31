@@ -14,11 +14,25 @@ logger = logging.getLogger(__name__)
 DEFAULT_PIPER_MODEL_PATH = os.path.join("piper_models", "en_US-lessac-medium")
 
 class GoogleTTS:
-    def __init__(self, language: str = "en"):
+    def __init__(self, language: str = "en-GB"):
         self.language = language
         self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 175)  # Speed of speech
+        self.engine.setProperty('rate', 165)  # Slightly slower for British accent
         self.engine.setProperty('volume', 1.0)  # Volume level
+        
+        # Try to set a British voice if available
+        voices = self.engine.getProperty('voices')
+        british_voice = None
+        
+        # Look for a British English voice
+        for voice in voices:
+            if 'en_GB' in voice.id or 'british' in voice.id.lower():
+                british_voice = voice.id
+                break
+                
+        # Set British voice if found
+        if british_voice:
+            self.engine.setProperty('voice', british_voice)
 
     async def text_to_speech(self, text: str) -> str:
         """
@@ -55,11 +69,11 @@ class PiperTTS:
         # Check if model exists
         self._verify_model()
         
-        # Default voice settings
+        # Default voice settings - tuned for a suave British accent
         self.speaker = 0
-        self.length_scale = 1.0  # Speed control (higher = slower)
-        self.noise_scale = 0.667  # Voice variations (higher = more variations)
-        self.noise_w = 0.8  # Phoneme variations (higher = more random)
+        self.length_scale = 1.1  # Slightly slower for British sophistication
+        self.noise_scale = 0.7  # Slightly more variations for expressiveness
+        self.noise_w = 0.75  # Balanced phoneme randomness for a natural British cadence
         
         logger.info(f"Initialized Piper TTS with model: {self.model_path}")
     
@@ -195,12 +209,12 @@ class PiperTTS:
 
 # Google Text-to-Speech using gTTS library
 class gTTS:
-    def __init__(self, language: str = "en"):
+    def __init__(self, language: str = "en-gb"):
         """
-        Initialize Google Text-to-Speech
+        Initialize Google Text-to-Speech with British English accent
         
         Args:
-            language: Language code (e.g., 'en', 'fr', 'es')
+            language: Language code (e.g., 'en-gb', 'en-us', 'fr', 'es')
         """
         try:
             # Lazily import to avoid dependency issues
