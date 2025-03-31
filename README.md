@@ -1,4 +1,4 @@
-# Rupert AI - Advanced Discord Bot
+# Rupert - Advanced AI Discord Bot
 
 Rupert is a sophisticated Discord bot leveraging Google's Gemini AI for intelligent conversation, voice interaction, and visual content analysis. With its signature British philosophical persona, Rupert can engage in voice calls, analyze screenshared content, and maintain contextual conversations across Discord channels.
 
