@@ -2,7 +2,7 @@
 
 Rupert is a sophisticated Discord bot leveraging Google's Gemini AI for intelligent conversation, voice interaction, and visual content analysis. With its signature British philosophical persona, Rupert can engage in voice calls, analyze screenshared content, and maintain contextual conversations across Discord channels.
 
-![Rupert Icon](static/images/rupert picture.png)
+![Rupert Picture](attached_assets/rupert picture.png)
 
 ## Key Features
 
