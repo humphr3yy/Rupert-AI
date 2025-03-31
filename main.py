@@ -30,7 +30,14 @@ bot_status = {
     "connected_guild": None,
     "voice_channel": None,
     "active_users": [],
-    "conversation_log": []
+    "conversation_log": [],
+    "tts_settings": {
+        "engine": "British English",
+        "accent": "en-GB", 
+        "speed": 1.1,
+        "variation": 0.7,
+        "randomness": 0.75
+    }
 }
 
 # Create a route for the main page
@@ -81,12 +88,19 @@ def start_bot():
                     "message": "Discord token not set. Please configure it in the settings."
                 })
             
+            # Initialize TTS with British accent
+            import tts as tts_module
+            logger.info("Initializing TTS with British accent")
+            piper_tts = tts_module.PiperTTS()
+            # Set slightly slower speed for British sophistication
+            piper_tts.set_voice_parameters(speed=1.1, variation=0.7, randomness=0.75)
+            
             # Initialize the bot in a separate thread
             bot_instance = RupertBot(discord_token)
             
             def run_bot():
                 try:
-                    logger.info("Starting bot in separate thread")
+                    logger.info("Starting bot in separate thread with British accent")
                     bot_instance.run()
                 except Exception as e:
                     logger.error(f"Error in bot thread: {e}")
@@ -248,7 +262,7 @@ def log_conversation():
 # This is the entry point when run directly
 if __name__ == "__main__":
     # Check if running as a standalone script or as part of the web app
-    if os.environ.get("RUN_BOT_DIRECTLY", "false").lower() == "true":
+    if config.RUN_BOT_DIRECTLY:
         # Get Discord token from environment variable
         discord_token = os.getenv("DISCORD_TOKEN")
         
@@ -256,7 +270,19 @@ if __name__ == "__main__":
             logging.error("DISCORD_TOKEN environment variable not set")
             raise ValueError("DISCORD_TOKEN environment variable is required")
         
+        # Display bot configuration
+        logger.info(f"Command Prefix: {config.COMMAND_PREFIX}")
+        logger.info(f"Gemini API: {'Configured' if config.GEMINI_API_KEY else 'Not configured'}")
+        
+        # Initialize TTS with British accent
+        import tts as tts_module
+        logger.info("Initializing TTS with British accent")
+        piper_tts = tts_module.PiperTTS()
+        # Set slightly slower speed for British sophistication
+        piper_tts.set_voice_parameters(speed=1.1, variation=0.7, randomness=0.75)
+        
         # Initialize and run the bot
+        logger.info("Starting Rupert with British accent configuration")
         bot = RupertBot(discord_token)
         bot.run()
     else:

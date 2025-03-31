@@ -438,6 +438,54 @@
                         </ul>
                     </div>
                 </div>
+                
+                <!-- British TTS Settings Card -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h4 class="card-title">British Voice Settings</h4>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Voice Engine</span>
+                            <span class="badge bg-success" id="tts-engine">British English</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Accent</span>
+                            <span class="badge bg-success" id="tts-accent">en-GB</span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5>Voice Parameters</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Speech Speed</label>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">Faster</span>
+                                <input type="range" class="form-range" min="0.5" max="2.0" step="0.1" value="1.1" id="speed-slider" disabled>
+                                <span class="ms-2">Slower</span>
+                            </div>
+                            <small class="text-muted">Current: <span id="speed-value">1.1</span> (Slower for British sophistication)</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Voice Variation</label>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">Less</span>
+                                <input type="range" class="form-range" min="0.1" max="1.0" step="0.05" value="0.7" id="variation-slider" disabled>
+                                <span class="ms-2">More</span>
+                            </div>
+                            <small class="text-muted">Current: <span id="variation-value">0.7</span> (More expressive)</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Phoneme Randomness</label>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">Stable</span>
+                                <input type="range" class="form-range" min="0.1" max="1.0" step="0.05" value="0.75" id="randomness-slider" disabled>
+                                <span class="ms-2">Random</span>
+                            </div>
+                            <small class="text-muted">Current: <span id="randomness-value">0.75</span> (Natural British cadence)</small>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="col-md-6">
@@ -602,6 +650,54 @@
                 logContainer.appendChild(logEntry);
                 logContainer.scrollTop = logContainer.scrollHeight;
             }
+            
+            // Function to update TTS settings display
+            function updateTTSSettings(settings) {
+                if (settings && settings.tts_settings) {
+                    document.getElementById('tts-engine').textContent = settings.tts_settings.engine || 'British English';
+                    document.getElementById('tts-accent').textContent = settings.tts_settings.accent || 'en-GB';
+                    
+                    const speedSlider = document.getElementById('speed-slider');
+                    const speedValue = document.getElementById('speed-value');
+                    if (speedSlider && settings.tts_settings.speed) {
+                        speedSlider.value = settings.tts_settings.speed;
+                        speedValue.textContent = settings.tts_settings.speed;
+                    }
+                    
+                    const variationSlider = document.getElementById('variation-slider');
+                    const variationValue = document.getElementById('variation-value');
+                    if (variationSlider && settings.tts_settings.variation) {
+                        variationSlider.value = settings.tts_settings.variation;
+                        variationValue.textContent = settings.tts_settings.variation;
+                    }
+                    
+                    const randomnessSlider = document.getElementById('randomness-slider');
+                    const randomnessValue = document.getElementById('randomness-value');
+                    if (randomnessSlider && settings.tts_settings.randomness) {
+                        randomnessSlider.value = settings.tts_settings.randomness;
+                        randomnessValue.textContent = settings.tts_settings.randomness;
+                    }
+                }
+            }
+            
+            // Load bot status and TTS settings on page load
+            fetch('/bot-status')
+                .then(response => response.json())
+                .then(data => {
+                    updateTTSSettings(data);
+                    
+                    // Update bot status if it's running
+                    if (data.running) {
+                        statusIndicator.classList.remove('status-offline');
+                        statusIndicator.classList.add('status-online');
+                        statusText.textContent = 'Online';
+                        startBotBtn.disabled = true;
+                        stopBotBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching bot status:', error);
+                });
             
             // Simulate checking services on page load
             setTimeout(() => {
