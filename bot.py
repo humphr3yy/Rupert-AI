@@ -140,6 +140,10 @@ class RupertBot:
                             )
                         break
                 
+                # Start listening and transcribing voice
+                asyncio.create_task(self.listen_and_transcribe(ctx.guild, voice_client))
+                logger.info(f"Started listening task in {channel.name}")
+                
             except Exception as e:
                 logger.error(f"Error joining voice channel: {e}")
                 await ctx.send(f"Error joining voice channel: {e}")
@@ -223,51 +227,85 @@ class RupertBot:
     
     async def analyze_and_respond(self, voice_client, guild_id: int, user_id: int, speaker: str, transcript: str):
         """Analyze the transcript and respond if appropriate"""
-        # Skip if the transcript doesn't contain "rupert" at all
-        if "rupert" not in transcript.lower() and "ruppert" not in transcript.lower():
-            return
-            
-        # Determine if the user is talking to Rupert or about Rupert
+        # Get conversation context for better analysis
+        context = self.get_recent_conversation_context(guild_id)
+        
+        # Check if Rupert is alone with just one user in the channel
+        is_alone_with_user = False
+        if voice_client and hasattr(voice_client, 'channel') and voice_client.channel:
+            # Count non-bot members in the channel
+            human_members = [m for m in voice_client.channel.members if not m.bot]
+            # If there's only one human member (and Rupert), we're alone with the user
+            is_alone_with_user = len(human_members) == 1
+            if is_alone_with_user:
+                logger.info(f"Rupert is alone with {speaker} in the channel")
+        
+        # Check if this is replying to Rupert's last message
+        is_reply_to_rupert = False
+        if guild_id in self.conversation_history and len(self.conversation_history[guild_id]) >= 2:
+            # Get the last two messages
+            last_msgs = self.conversation_history[guild_id][-2:]
+            # If the previous message was from Rupert and this is from someone else
+            if last_msgs[0]["speaker"] == "Rupert" and speaker != "Rupert":
+                is_reply_to_rupert = True
+                logger.info(f"Detected reply to Rupert's message: {transcript}")
+        
+        # Check if transcript contains "rupert"
+        contains_rupert = "rupert" in transcript.lower() or "ruppert" in transcript.lower()
+        
+        # Determine if user is addressing Rupert directly
         is_addressing_rupert = False
         confidence = 0.0
+        requires_response = False
         
-        # Use the local utility function first (faster)
-        is_addressing_rupert, confidence = analyze_conversation_intent(transcript)
-        
-        # If confidence is low and we have AI-based intent analysis enabled, use the more sophisticated method
-        if INTENT_ANALYSIS_ENABLED and confidence < INTENT_CONFIDENCE_THRESHOLD:
-            try:
-                # Get conversation context for better analysis
-                context = self.get_recent_conversation_context(guild_id)
-                
-                # Use the AI to analyze the conversation intent
-                analysis = await self.ai_api.analyze_conversation_context(transcript, context)
-                
-                # Update our decision based on the AI analysis
-                is_addressing_rupert = analysis.get("is_addressing_rupert", is_addressing_rupert)
-                requires_response = analysis.get("requires_response", True)
-                confidence = analysis.get("confidence", confidence)
-                
-                logger.info(f"AI conversation analysis: {analysis}")
-                
-                # If AI determined we don't need to respond, exit
-                if not requires_response:
-                    logger.info(f"AI determined no response needed for: '{transcript}'")
-                    return
+        # First check the more straightforward cases
+        if is_alone_with_user:
+            # When alone with user, always respond regardless of content
+            requires_response = True
+            is_addressing_rupert = True
+            confidence = 0.9  # Very high confidence when alone
+            logger.info(f"Rupert is alone with user, responding to: {transcript}")
+        elif is_reply_to_rupert:
+            # When replying to Rupert's last message, always respond
+            requires_response = True
+            is_addressing_rupert = True
+            confidence = 0.9  # Very high confidence for direct replies
+            logger.info(f"User is replying to Rupert's message: {transcript}")
+        elif contains_rupert:
+            # When contains "rupert", analyze if they're talking TO or ABOUT Rupert
+            # Use the local utility function first for quick analysis
+            is_addressing_rupert, confidence = analyze_conversation_intent(transcript)
+            
+            # If confidence is low and we have AI-based intent analysis enabled
+            if INTENT_ANALYSIS_ENABLED and confidence < INTENT_CONFIDENCE_THRESHOLD:
+                try:
+                    # Use the AI to analyze the conversation intent
+                    analysis = await self.ai_api.analyze_conversation_context(transcript, context)
                     
-            except Exception as e:
-                logger.error(f"Error in AI conversation analysis: {e}")
-                # Continue with the simple detection result in case of error
+                    # Update our decision based on the AI analysis
+                    is_addressing_rupert = analysis.get("is_addressing_rupert", is_addressing_rupert)
+                    requires_response = analysis.get("requires_response", True)
+                    confidence = analysis.get("confidence", confidence)
+                    
+                    logger.info(f"AI conversation analysis: {analysis}")
+                except Exception as e:
+                    logger.error(f"Error in AI conversation analysis: {e}")
+                    # Continue with simple detection in case of error
+                    requires_response = "rupert" in transcript.lower()
         
-        # Check if we should respond based on our analysis
-        if is_addressing_rupert and confidence >= INTENT_CONFIDENCE_THRESHOLD:
+        # Now decide if we should respond
+        should_respond = (is_alone_with_user or 
+                         is_reply_to_rupert or 
+                         (contains_rupert and is_addressing_rupert and confidence >= INTENT_CONFIDENCE_THRESHOLD))
+        
+        if should_respond:
             # Check if this is related to a screenshare that needs visual analysis
             if VISION_ENABLED and self.is_asking_about_screen(transcript, guild_id):
                 await self.handle_vision_interaction(voice_client, guild_id, speaker, transcript)
             else:
                 # Normal Rupert interaction
                 await self.handle_rupert_interaction(voice_client, speaker, transcript)
-        else:
+        elif contains_rupert:
             logger.info(f"Detected mention of Rupert but not addressing Rupert directly (confidence: {confidence})")
     
     def get_recent_conversation_context(self, guild_id: int) -> str:
@@ -500,9 +538,8 @@ class RupertBot:
         
         try:
             # Get conversation context
-            context = self.get_recent_conversation_context(
-                voice_client.guild.id if hasattr(voice_client, 'guild') else 0
-            )
+            guild_id = voice_client.guild.id if hasattr(voice_client, 'guild') else 0
+            context = self.get_recent_conversation_context(guild_id)
             
             # Add context if available
             if context:
@@ -513,6 +550,9 @@ class RupertBot:
             # Get AI response from Gemini
             ai_response = await self.ai_api.generate_response(full_prompt)
             logger.info(f"Gemini response: {ai_response}")
+            
+            # Add Rupert's response to conversation history
+            self.add_to_conversation_history(guild_id, "Rupert", ai_response)
             
             # Convert AI response to speech and play it
             audio_file = await self.tts.text_to_speech(ai_response)
