@@ -212,7 +212,7 @@ This project is released under the MIT License. See the LICENSE file for details
 - Piper TTS for high-quality voice synthesis
 - Discord.py for Discord integration
 
-## Credits
+### Credits
 *Thank you* to ***all*** the Developers who worked on this!
 
 *Humphr3yy* / *Kaiden K* - **Creator**, Developer
